@@ -16,6 +16,19 @@ class Settings(BaseSettings):
     ARCHITECT_API_KEY: str = Field(default="")
     EM_API_KEY: str = Field(default="")
     MARKETING_API_KEY: str = Field(default="")
+
+    # Generic Models
+    GROQ_MODEL: str = Field(default="llama-3.3-70b-versatile")
+    GEMINI_MODEL: str = Field(default="gemini-2.5-flash")
+    NVIDIA_NIM_MODEL: str = Field(default="nvidia/llama-3.1-nemotron-70b-instruct")
+    
+    # Agent-Specific Models
+    ADVISOR_MODEL: str = Field(default="")
+    RESEARCHER_MODEL: str = Field(default="")
+    PM_MODEL: str = Field(default="")
+    ARCHITECT_MODEL: str = Field(default="")
+    EM_MODEL: str = Field(default="")
+    MARKETING_MODEL: str = Field(default="")
     
     # Tool Configs
     GITHUB_TOKEN: str = Field(default="")

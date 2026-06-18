@@ -51,11 +51,12 @@ async def call_with_retry(func, *args, **kwargs):
                 raise e
             await asyncio.sleep(2 ** attempt)
 
-async def query_groq(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None) -> Dict[str, Any]:
+async def query_groq(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
     key_to_use = api_key or settings.GROQ_API_KEY
     if not key_to_use:
         raise ValueError("GROQ_API_KEY is not configured.")
     
+    model_to_use = model or settings.GROQ_MODEL or "llama-3.3-70b-versatile"
     client = AsyncGroq(api_key=key_to_use)
     prompt = f"{user_prompt}\n\nReturn a JSON object matching this schema:\n{schema.schema_json()}"
     
@@ -66,7 +67,7 @@ async def query_groq(system_instruction: str, user_prompt: str, schema: Any, api
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": prompt}
             ],
-            model="llama-3.3-70b-versatile",
+            model=model_to_use,
             response_format={"type": "json_object"},
             temperature=0.1
         )
@@ -77,20 +78,21 @@ async def query_groq(system_instruction: str, user_prompt: str, schema: Any, api
         
     return await call_with_retry(_call)
 
-async def query_gemini(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None) -> Dict[str, Any]:
+async def query_gemini(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
     key_to_use = api_key or settings.GEMINI_API_KEY
     if not key_to_use:
         raise ValueError("GEMINI_API_KEY is not configured.")
     
+    model_to_use = model or settings.GEMINI_MODEL or "gemini-2.5-flash"
     genai.configure(api_key=key_to_use)
-    model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash",
+    generative_model = genai.GenerativeModel(
+        model_name=model_to_use,
         system_instruction=system_instruction
     )
     
     async def _call():
         await asyncio.sleep(1.0)  # Rate limit safety delay
-        response = await model.generate_content_async(
+        response = await generative_model.generate_content_async(
             user_prompt,
             generation_config=genai.GenerationConfig(
                 response_mime_type="application/json",
@@ -104,11 +106,12 @@ async def query_gemini(system_instruction: str, user_prompt: str, schema: Any, a
         
     return await call_with_retry(_call)
 
-async def query_nim(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None) -> Dict[str, Any]:
+async def query_nim(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
     key_to_use = api_key or settings.NVIDIA_NIM_API_KEY
     if not key_to_use:
         raise ValueError("NVIDIA_NIM_API_KEY is not configured.")
         
+    model_to_use = model or settings.NVIDIA_NIM_MODEL or "nvidia/llama-3.1-nemotron-70b-instruct"
     client = AsyncOpenAI(
         base_url="https://integrate.api.nvidia.com/v1",
         api_key=key_to_use
@@ -123,7 +126,7 @@ async def query_nim(system_instruction: str, user_prompt: str, schema: Any, api_
                 {"role": "system", "content": system_instruction},
                 {"role": "user", "content": prompt}
             ],
-            model="nvidia/llama-3.1-nemotron-70b-instruct",
+            model=model_to_use,
             response_format={"type": "json_object"},
             temperature=0.1
         )
@@ -197,7 +200,7 @@ async def startup_advisor_node(state: GraphState) -> Dict[str, Any]:
                         red_flags=[]
                     )
             else:
-                result_dict = await query_groq(system_instruction, prompt, ValidationResult, api_key=api_key)
+                result_dict = await query_groq(system_instruction, prompt, ValidationResult, api_key=api_key, model=settings.ADVISOR_MODEL)
                 result = ValidationResult(**result_dict)
                 
             version = save_artifact(state.session_id, "startup_advisor", result.dict())
@@ -305,7 +308,7 @@ async def market_research_node(state: GraphState) -> Dict[str, Any]:
             )
             report_dict = report.dict()
         else:
-            report_dict = await query_groq(system_instruction, prompt, MarketResearchReport, api_key=api_key)
+            report_dict = await query_groq(system_instruction, prompt, MarketResearchReport, api_key=api_key, model=settings.RESEARCHER_MODEL)
             if not report_dict.get("sources"):
                 report_dict["sources"] = sources
             report = MarketResearchReport(**report_dict)
@@ -346,7 +349,7 @@ async def product_manager_node(state: GraphState) -> Dict[str, Any]:
             )
             prd_dict = prd.dict()
         else:
-            prd_dict = await query_gemini(system_instruction, prompt, PRD, api_key=api_key)
+            prd_dict = await query_gemini(system_instruction, prompt, PRD, api_key=api_key, model=settings.PM_MODEL)
             prd = PRD(**prd_dict)
             
         version = save_artifact(state.session_id, "product_manager", prd_dict)
@@ -384,7 +387,7 @@ async def architect_node(state: GraphState) -> Dict[str, Any]:
             )
             spec_dict = spec.dict()
         else:
-            spec_dict = await query_nim(system_instruction, prompt, ArchitectureSpec, api_key=api_key)
+            spec_dict = await query_nim(system_instruction, prompt, ArchitectureSpec, api_key=api_key, model=settings.ARCHITECT_MODEL)
             spec = ArchitectureSpec(**spec_dict)
             
         version = save_artifact(state.session_id, "architect", spec_dict)
@@ -420,7 +423,7 @@ async def engineering_manager_node(state: GraphState) -> Dict[str, Any]:
             )
             plan_dict = plan.dict()
         else:
-            plan_dict = await query_groq(system_instruction, prompt, IssuesAndSprintPlan, api_key=api_key)
+            plan_dict = await query_groq(system_instruction, prompt, IssuesAndSprintPlan, api_key=api_key, model=settings.EM_MODEL)
             plan = IssuesAndSprintPlan(**plan_dict)
             
         version = save_artifact(state.session_id, "engineering_manager", plan_dict)
@@ -469,7 +472,7 @@ async def marketing_node(state: GraphState) -> Dict[str, Any]:
             )
             assets_dict = assets.dict()
         else:
-            assets_dict = await query_groq(system_instruction, prompt, MarketingAssets, api_key=api_key)
+            assets_dict = await query_groq(system_instruction, prompt, MarketingAssets, api_key=api_key, model=settings.MARKETING_MODEL)
             assets = MarketingAssets(**assets_dict)
             
         version = save_artifact(state.session_id, "marketing", assets_dict)

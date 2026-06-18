@@ -45,7 +45,7 @@ graph TD
 
 ### 1. 💡 Startup Advisor
 *   **Core Mission**: Acts as the initial filter and risk gatekeeper. It evaluates the founder's raw concept for feasibility, market saturation, and potential execution bottlenecks.
-*   **LLM Model**: Groq (`llama-3.3-70b-versatile`) via `ADVISOR_API_KEY` (or generic `GROQ_API_KEY`).
+*   **LLM Model**: Groq (configurable via `ADVISOR_MODEL`, falls back to `GROQ_MODEL` or default `llama-3.3-70b-versatile`) via `ADVISOR_API_KEY` (or generic `GROQ_API_KEY`).
 *   **Processing Logic**: Evaluates key parameters such as value proposition complexity, resource constraints, and regulatory hurdles. Calculates a float-based risk score. If the risk score is high (threshold $\ge 0.6$) or if critical red flags are present, it triggers a system interrupt.
 *   **Output Schema (`ValidationResult`)**:
     *   `verdict` (string): The summary assessment (e.g., "Approved", "Needs Revision").
@@ -55,7 +55,7 @@ graph TD
 
 ### 2. 🔍 Market Researcher
 *   **Core Mission**: Gathers real-time external competitive intelligence to ground the startup idea in current market realities.
-*   **LLM Model**: Groq (`llama-3.3-70b-versatile`) via `RESEARCHER_API_KEY` (or generic `GROQ_API_KEY`).
+*   **LLM Model**: Groq (configurable via `RESEARCHER_MODEL`, falls back to `GROQ_MODEL` or default `llama-3.3-70b-versatile`) via `RESEARCHER_API_KEY` (or generic `GROQ_API_KEY`).
 *   **Tools**: **Tavily Search API** tool (`tools/tavily.py`) executing direct search payloads.
 *   **Processing Logic**: Automatically triggers search queries focusing on competitors and industry trends. Receives search results, parses the raw webpage content, estimates the Total Addressable Market (TAM), identifies top players, and filters credible sources.
 *   **Output Schema (`MarketResearchReport`)**:
@@ -66,7 +66,7 @@ graph TD
 
 ### 3. 📋 Product Manager
 *   **Core Mission**: Synthesizes the core startup concept and the competitor landscape research into a foundational product specification.
-*   **LLM Model**: Google Gemini (`gemini-2.5-flash`) via `PM_API_KEY` (or generic `GEMINI_API_KEY`).
+*   **LLM Model**: Google Gemini (configurable via `PM_MODEL`, falls back to `GEMINI_MODEL` or default `gemini-2.5-flash`) via `PM_API_KEY` (or generic `GEMINI_API_KEY`).
 *   **Processing Logic**: Matches features against identified market gaps. It drafts user stories, prioritizes features, and builds a phased timeline.
 *   **Output Schema (`PRD`)**:
     *   `problem_statement` (string): A clear, concise statement of the problem being solved.
@@ -76,7 +76,7 @@ graph TD
 
 ### 4. 📐 System Architect
 *   **Core Mission**: Designs the technical foundation for the product specified in the PRD, generating concrete schemas and interface contracts.
-*   **LLM Model**: Nvidia NIM (`nvidia/llama-3.1-nemotron-70b-instruct`) via `ARCHITECT_API_KEY` (or generic `NVIDIA_NIM_API_KEY`).
+*   **LLM Model**: Nvidia NIM (configurable via `ARCHITECT_MODEL`, falls back to `NVIDIA_NIM_MODEL` or default `nvidia/llama-3.1-nemotron-70b-instruct`) via `ARCHITECT_API_KEY` (or generic `NVIDIA_NIM_API_KEY`).
 *   **Processing Logic**: Analyzes the PRD's features list, translates them into standard relational database models, structures API endpoint contracts, and compiles system design notes.
 *   **Output Schema (`ArchitectureSpec`)**:
     *   `db_schema_sql` (string): Valid DDL SQL script specifying tables, constraints, and relationships.
@@ -86,7 +86,7 @@ graph TD
 
 ### 5. ⚙️ Engineering Manager
 *   **Core Mission**: Deconstructs technical specifications into actionable development cycles, issue logs, and automated repository boards.
-*   **LLM Model**: Groq (`llama-3.3-70b-versatile`) via `EM_API_KEY` (or generic `GROQ_API_KEY`).
+*   **LLM Model**: Groq (configurable via `EM_MODEL`, falls back to `GROQ_MODEL` or default `llama-3.3-70b-versatile`) via `EM_API_KEY` (or generic `GROQ_API_KEY`).
 *   **Tools**: **GitHub REST API** integration (`tools/github.py`) for automated issue synchronization.
 *   **Processing Logic**: Creates a list of standard developer tasks, categorizes them with tags, and maps them to development sprints. If a repository path is specified, it invokes the GitHub API client to programmatically create issues.
 *   **Output Schema (`IssuesAndSprintPlan`)**:
@@ -95,7 +95,7 @@ graph TD
 
 ### 6. 📣 Marketing Specialist
 *   **Core Mission**: Converts product capabilities into high-converting promotional copies and launch marketing sequences.
-*   **LLM Model**: Groq (`llama-3.3-70b-versatile`) via `MARKETING_API_KEY` (or generic `GROQ_API_KEY`).
+*   **LLM Model**: Groq (configurable via `MARKETING_MODEL`, falls back to `GROQ_MODEL` or default `llama-3.3-70b-versatile`) via `MARKETING_API_KEY` (or generic `GROQ_API_KEY`).
 *   **Processing Logic**: Analyzes target users and features to write headlines, social copy, and outreach campaign copy.
 *   **Output Schema (`MarketingAssets`)**:
     *   `landing_copy` (string): Hero headlines, sub-headlines, and landing page body copy.
@@ -167,6 +167,19 @@ PM_API_KEY=
 ARCHITECT_API_KEY=
 EM_API_KEY=
 MARKETING_API_KEY=
+
+# Generic LLM Models (Defaults will be used if left blank)
+GROQ_MODEL=llama-3.3-70b-versatile
+GEMINI_MODEL=gemini-2.5-flash
+NVIDIA_NIM_MODEL=nvidia/llama-3.1-nemotron-70b-instruct
+
+# Agent-Specific Model Routing (Falls back to generic models above if empty)
+ADVISOR_MODEL=
+RESEARCHER_MODEL=
+PM_MODEL=
+ARCHITECT_MODEL=
+EM_MODEL=
+MARKETING_MODEL=
 
 # Integration Tokens (Optional)
 GITHUB_TOKEN=your_github_personal_access_token
