@@ -7,13 +7,13 @@
   <img src="https://img.shields.io/badge/Database-SQLite-047857?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
 </p>
 
-An advanced, multi-agent AI pipeline designed to guide founders from a raw startup idea to a fully structured, ready-to-build project. The system orchestrates six specialised AI agents operating in sequence with a **human-in-the-loop gate interrupt** for risk control, producing custom PRDs, database architectures, issues backlogs, promotional copies, and compiled PDF reports.
+An advanced, multi-agent AI pipeline designed to guide founders from a raw startup idea to a fully structured, ready-to-build project. The system orchestrates six specialised AI agents operating in parallel-branching paths (after the Product Manager step) with a **human-in-the-loop gate interrupt** for risk control, producing custom PRDs, database architectures, issues backlogs, promotional copies, and compiled PDF reports.
 
 ---
 
 ## 🗺️ System Architecture
 
-The workflow is managed as a stateful graph using **LangGraph**, executing agents sequentially and saving intermediate artifacts and decision logs to a local SQLite database.
+The workflow is managed as a stateful graph using **LangGraph**, executing agents through a parallel-branching pipeline and saving intermediate artifacts and decision logs to a local SQLite database.
 
 ```mermaid
 graph TD
@@ -26,12 +26,19 @@ graph TD
     
     Gate -- Risk < 0.8 --> Researcher[2. Market Researcher]
     Researcher --> PM[3. Product Manager]
+    
+    %% Parallel Branching
     PM --> Architect[4. System Architect]
+    PM --> Marketing[6. Marketing Specialist]
+    
     Architect --> EM[5. Engineering Manager]
-    EM --> Marketing[6. Marketing Specialist]
-    Marketing --> Export[Generate PDF & Sync Integrations]
-    Export --> End([ deep deep interaction console ])
+    
+    EM --> Join[Generate PDF & Sync Integrations]
+    Marketing --> Join
+    
+    Join --> End([ deep deep interaction console ])
 ```
+
 
 ---
 
