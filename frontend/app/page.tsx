@@ -36,7 +36,7 @@ export default function LandingPage() {
           {/* Subtle green glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#E8A33D]/5 rounded-full blur-[100px] pointer-events-none"></div>
 
-          <div className="max-w-6xl mx-auto w-full z-10">
+          <div className="max-w-6xl mx-auto w-full relative z-10">
             <motion.div initial={{opacity: 0, y: 20}} animate={{opacity: 1, y: 0}} transition={{duration: 0.8}}>
               <h1 className="text-4xl md:text-6xl font-bold uppercase tracking-tight leading-[1.1] mb-6">
                 The<br />Blueprint<br />
