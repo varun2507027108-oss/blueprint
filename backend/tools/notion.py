@@ -5,10 +5,7 @@ from typing import Dict, Any, List, Optional
 from config import settings
 
 logger = logging.getLogger(__name__)
-
 NOTION_VERSION = "2022-06-28"
-
-# Reusable HTTP client for better performance
 NOTION_CLIENT = httpx.AsyncClient(timeout=30.0)
 
 def get_headers() -> Dict[str, str]:
@@ -19,33 +16,20 @@ def get_headers() -> Dict[str, str]:
     }
 
 def _chunk_string(s: str, max_len: int = 1900) -> List[str]:
-    """Splits a string into chunks of max_len to avoid Notion's 2000 char limit."""
-    if not s:
-        return [""]
+    if not s: return [""]
     return [s[i:i+max_len] for i in range(0, len(s), max_len)]
 
 async def create_notion_page(startup_name: str, session_id: str) -> Optional[str]:
-    """
-    Create a page inside the database specified by NOTION_DATABASE_ID.
-    Returns the page_id if successful.
-    """
     if not settings.NOTION_TOKEN or not settings.NOTION_DATABASE_ID:
-        logger.warning("Notion token or database ID not set. Skipping Notion page creation.")
         return None
 
     url = "https://api.notion.com/v1/pages"
     payload = {
-        "parent": {
-            "database_id": settings.NOTION_DATABASE_ID
-        },
+        "parent": {"database_id": settings.NOTION_DATABASE_ID},
         "properties": {
             "Name": {
                 "title": [
-                    {
-                        "text": {
-                            "content": f"{startup_name} - AI Founder Launch ({session_id})"
-                        }
-                    }
+                    {"text": {"content": f"{startup_name} - Blueprint ({session_id.split('-')[0]})"}}
                 ]
             }
         }
@@ -54,271 +38,156 @@ async def create_notion_page(startup_name: str, session_id: str) -> Optional[str
     try:
         response = await NOTION_CLIENT.post(url, headers=get_headers(), json=payload)
         if response.status_code == 200:
-            page_data = response.json()
-            page_id = page_data.get("id")
-            logger.info(f"Created Notion page successfully: {page_id}")
-            return page_id
-        else:
-            logger.error(f"Failed to create Notion page. Status: {response.status_code}, Response: {response.text}")
-            return None
+            return response.json().get("id")
+        logger.error(f"Notion page creation failed: {response.text}")
+        return None
     except Exception as e:
         logger.exception(f"Error creating Notion page: {e}")
         return None
 
 async def append_notion_blocks(page_id: str, blocks: List[Dict[str, Any]]) -> bool:
-    """
-    Append child blocks to a Notion page/block.
-    """
-    if not settings.NOTION_TOKEN:
-        return False
+    if not settings.NOTION_TOKEN: return False
 
     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
-    
-    # Notion API allows max 100 blocks per request
     chunk_size = 80
     for i in range(0, len(blocks), chunk_size):
         chunk = blocks[i:i + chunk_size]
-        payload = {"children": chunk}
         try:
-            response = await NOTION_CLIENT.patch(url, headers=get_headers(), json=payload)
+            response = await NOTION_CLIENT.patch(url, headers=get_headers(), json={"children": chunk})
             if response.status_code != 200:
-                logger.error(f"Failed to append Notion blocks. Status: {response.status_code}, Response: {response.text}")
+                logger.error(f"Notion append failed: {response.text}")
                 return False
         except Exception as e:
             logger.exception(f"Error appending Notion blocks: {e}")
             return False
-            
     return True
 
-def create_heading_block(text: str, level: int = 2) -> Dict[str, Any]:
-    heading_key = f"heading_{level}"
+# --- Professional Block Builders ---
+
+def create_heading_block(text: str, level: int = 1) -> Dict[str, Any]:
+    key = f"heading_{level}"
     return {
         "object": "block",
-        "type": heading_key,
-        heading_key: {
-            "rich_text": [
-                {
-                    "type": "text",
-                    "text": {
-                        "content": text[:1900] # Hard truncate headings just in case
-                    }
-                }
-            ]
-        }
+        "type": key,
+        key: {"rich_text": [{"type": "text", "text": {"content": text[:1900]}, "annotations": {"bold": True}}]}
     }
 
+def create_divider_block() -> Dict[str, Any]:
+    return {"object": "block", "type": "divider", "divider": {}}
+
+def create_quote_block(text: str) -> List[Dict[str, Any]]:
+    blocks = []
+    for chunk in _chunk_string(text):
+        blocks.append({
+            "object": "block",
+            "type": "quote",
+            "quote": {"rich_text": [{"type": "text", "text": {"content": chunk}}]}
+        })
+    return blocks
+
 def create_paragraph_block(text: str) -> List[Dict[str, Any]]:
-    """Returns a list of paragraph blocks, split if necessary."""
     blocks = []
     for chunk in _chunk_string(text):
         blocks.append({
             "object": "block",
             "type": "paragraph",
-            "paragraph": {
-                "rich_text": [
-                    {
-                        "type": "text",
-                        "text": {
-                            "content": chunk
-                        }
-                    }
-                ]
-            }
+            "paragraph": {"rich_text": [{"type": "text", "text": {"content": chunk}}]}
         })
     return blocks
 
 def create_bullet_block(text: str) -> List[Dict[str, Any]]:
-    """Returns a list of bullet blocks, split if necessary."""
     blocks = []
     for chunk in _chunk_string(text):
         blocks.append({
             "object": "block",
             "type": "bulleted_list_item",
-            "bulleted_list_item": {
-                "rich_text": [
-                    {
-                        "type": "text",
-                        "text": {
-                            "content": chunk
-                        }
-                    }
-                ]
-            }
+            "bulleted_list_item": {"rich_text": [{"type": "text", "text": {"content": chunk}}]}
         })
     return blocks
 
-def create_code_block(code: str, language: str = "plain text") -> List[Dict[str, Any]]:
-    """Returns a list of code blocks, split if necessary."""
+def create_toggle_code_block(code: str, language: str, title: str) -> List[Dict[str, Any]]:
+    """Creates a toggle block to hide long code snippets, keeping the page clean."""
     blocks = []
     for chunk in _chunk_string(code):
         blocks.append({
             "object": "block",
-            "type": "code",
-            "code": {
-                "rich_text": [
-                    {
-                        "type": "text",
-                        "text": {
-                            "content": chunk
-                        }
-                    }
-                ],
-                "language": language
-            }
-        })
-    return blocks
-
-def create_callout_block(text: str, emoji: str = "💡") -> List[Dict[str, Any]]:
-    """Returns a list of callout blocks, split if necessary."""
-    blocks = []
-    for chunk in _chunk_string(text):
-        blocks.append({
-            "object": "block",
-            "type": "callout",
-            "callout": {
-                "rich_text": [
-                    {
-                        "type": "text",
-                        "text": {
-                            "content": chunk
-                        }
-                    }
-                ],
-                "icon": {
-                    "type": "emoji",
-                    "emoji": emoji
-                }
+            "type": "toggle",
+            "toggle": {
+                "rich_text": [{"type": "text", "text": {"content": title}, "annotations": {"bold": True}}],
+                "children": [{
+                    "object": "block",
+                    "type": "code",
+                    "code": {"rich_text": [{"type": "text", "text": {"content": chunk}}], "language": language}
+                }]
             }
         })
     return blocks
 
 def translate_artifact_to_notion_blocks(stage_name: str, payload: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """
-    Translates a stage artifact JSON payload into Notion API blocks.
-    Uses extend() instead of append() for text blocks to support chunking.
-    """
     blocks = []
     
     if stage_name == "startup_advisor":
-        verdict = payload.get("verdict", "")
-        risk_score = payload.get("risk_score", 0.0)
-        reasoning = payload.get("reasoning", "")
-        red_flags = payload.get("red_flags", [])
-        
-        blocks.append(create_heading_block("1. Startup Advisor Validation", 2))
-        blocks.extend(create_callout_block(f"Verdict: {verdict} (Risk Score: {risk_score})", "🛡️"))
-        blocks.extend(create_paragraph_block(f"Reasoning: {reasoning}"))
-        if red_flags:
-            blocks.append(create_heading_block("Red Flags Flagged", 3))
-            for rf in red_flags:
+        blocks.append(create_heading_block("1. Executive Validation", 1))
+        blocks.append(create_divider_block())
+        blocks.extend(create_quote_block(f"Verdict: {payload.get('verdict', '')}  |  Risk Score: {payload.get('risk_score', 0.0)}/1.0"))
+        blocks.extend(create_paragraph_block(payload.get("reasoning", "")))
+        if payload.get("red_flags"):
+            blocks.append(create_heading_block("Critical Risks", 3))
+            for rf in payload.get("red_flags", []):
                 blocks.extend(create_bullet_block(rf))
                 
     elif stage_name == "market_research":
-        tam = payload.get("tam_estimate", "")
-        competitors = payload.get("competitors", [])
-        trends = payload.get("trends", [])
-        sources = payload.get("sources", [])
+        blocks.append(create_heading_block("2. Market Intelligence", 1))
+        blocks.append(create_divider_block())
+        blocks.extend(create_paragraph_block(f"TAM Estimate: {payload.get('tam_estimate', '')}"))
         
-        blocks.append(create_heading_block("2. Market Research", 2))
-        blocks.extend(create_paragraph_block(f"TAM Estimate: {tam}"))
-        
-        if competitors:
-            blocks.append(create_heading_block("Key Competitors", 3))
-            for comp in competitors:
-                blocks.extend(create_bullet_block(f"{comp.get('name', '')}: {comp.get('description', '')} (Link: {comp.get('url', '')})"))
-                
-        if trends:
-            blocks.append(create_heading_block("Market Trends", 3))
-            for trend in trends:
+        if payload.get("competitors"):
+            blocks.append(create_heading_block("Competitor Landscape", 3))
+            for comp in payload.get("competitors", []):
+                blocks.extend(create_bullet_block(f"{comp.get('name', '')}: {comp.get('description', '')}"))
+        if payload.get("trends"):
+            blocks.append(create_heading_block("Macro Trends", 3))
+            for trend in payload.get("trends", []):
                 blocks.extend(create_bullet_block(trend))
-                
-        if sources:
-            blocks.append(create_heading_block("Sources Referenced", 3))
-            for src in sources:
-                blocks.extend(create_bullet_block(src))
-                
+
     elif stage_name == "product_manager":
-        prob = payload.get("problem_statement", "")
-        stories = payload.get("user_stories", [])
-        features = payload.get("features", [])
-        phases = payload.get("roadmap_phases", [])
+        blocks.append(create_heading_block("3. Product Requirements (PRD)", 1))
+        blocks.append(create_divider_block())
+        blocks.extend(create_paragraph_block(payload.get("problem_statement", "")))
         
-        blocks.append(create_heading_block("3. Product Requirement Document (PRD)", 2))
-        blocks.extend(create_paragraph_block(f"Problem Statement: {prob}"))
-        
-        if stories:
-            blocks.append(create_heading_block("User Stories", 3))
-            for story in stories:
-                blocks.extend(create_bullet_block(story))
-                
-        if features:
-            blocks.append(create_heading_block("Core Features", 3))
-            for feat in features:
-                blocks.extend(create_bullet_block(f"[{feat.get('priority', 'Medium')}] {feat.get('name', '')}: {feat.get('description', '')}"))
-                
-        if phases:
-            blocks.append(create_heading_block("Roadmap Phases", 3))
-            for phase in phases:
-                items_str = ", ".join(phase.get("items", []))
-                blocks.extend(create_bullet_block(f"{phase.get('name', '')}: {items_str}"))
-                
+        if payload.get("features"):
+            blocks.append(create_heading_block("MVP Feature Scope", 3))
+            for feat in payload.get("features", []):
+                blocks.extend(create_bullet_block(f"[{feat.get('priority', 'Med')}] {feat.get('name', '')}: {feat.get('description', '')}"))
+
     elif stage_name == "architect":
-        sql = payload.get("db_schema_sql", "")
-        mermaid = payload.get("db_schema_mermaid", "")
-        endpoints = payload.get("api_endpoints", [])
-        notes = payload.get("system_design_notes", "")
+        blocks.append(create_heading_block("4. System Architecture", 1))
+        blocks.append(create_divider_block())
+        blocks.extend(create_paragraph_block(payload.get("system_design_notes", "")))
         
-        blocks.append(create_heading_block("4. System Architecture Specification", 2))
-        blocks.extend(create_paragraph_block(f"Notes: {notes}"))
-        
-        if sql:
-            blocks.append(create_heading_block("Database SQL Schema", 3))
-            blocks.extend(create_code_block(sql, "sql"))
+        if payload.get("db_schema_sql"):
+            blocks.extend(create_toggle_code_block(payload.get("db_schema_sql", ""), "sql", "View Database Schema (SQL)"))
             
-        if mermaid:
-            blocks.append(create_heading_block("Mermaid Diagram", 3))
-            blocks.extend(create_code_block(mermaid, "mermaid"))
-            
-        if endpoints:
-            blocks.append(create_heading_block("API Endpoints Contract", 3))
-            for ep in endpoints:
+        if payload.get("api_endpoints"):
+            blocks.append(create_heading_block("API Endpoints", 3))
+            for ep in payload.get("api_endpoints", []):
                 blocks.extend(create_bullet_block(f"{ep.get('method', 'GET')} {ep.get('path', '')} - {ep.get('description', '')}"))
-                
+
     elif stage_name == "engineering_manager":
-        issues = payload.get("issues", [])
-        sprints = payload.get("sprints", [])
+        blocks.append(create_heading_block("5. Delivery Plan", 1))
+        blocks.append(create_divider_block())
         
-        blocks.append(create_heading_block("5. Issues and Sprint Plan", 2))
-        
-        if sprints:
-            blocks.append(create_heading_block("Sprints Plan", 3))
-            for sp in sprints:
-                issues_str = ", ".join(sp.get("issue_titles", []))
-                blocks.extend(create_bullet_block(f"{sp.get('name', '')}: {issues_str}"))
-                
-        if issues:
-            blocks.append(create_heading_block("GitHub Issues List", 3))
-            for issue in issues:
-                labels_str = ", ".join(issue.get("labels", []))
-                blocks.extend(create_bullet_block(f"Issue: '{issue.get('title', '')}' [Labels: {labels_str}] - {issue.get('body', '')}"))
-                
+        if payload.get("sprints"):
+            blocks.append(create_heading_block("Sprint Allocation", 3))
+            for sp in payload.get("sprints", []):
+                blocks.extend(create_bullet_block(f"{sp.get('name', '')}: {', '.join(sp.get('issue_titles', []))}"))
+
     elif stage_name == "marketing":
-        copy = payload.get("landing_copy", "")
-        post = payload.get("linkedin_post", "")
-        campaign = payload.get("email_campaign", "")
-        
-        blocks.append(create_heading_block("6. Marketing Copy & Assets", 2))
-        
-        if copy:
-            blocks.append(create_heading_block("Landing Page Headline & Copy", 3))
-            blocks.extend(create_paragraph_block(copy))
-            
-        if post:
-            blocks.append(create_heading_block("LinkedIn Launch Post", 3))
-            blocks.extend(create_paragraph_block(post))
-            
-        if campaign:
-            blocks.append(create_heading_block("Email Campaign Copy", 3))
-            blocks.extend(create_paragraph_block(campaign))
+        blocks.append(create_heading_block("6. Go-To-Market Strategy", 1))
+        blocks.append(create_divider_block())
+        blocks.append(create_heading_block("Landing Page", 3))
+        blocks.extend(create_paragraph_block(payload.get("landing_copy", "")))
+        blocks.append(create_heading_block("LinkedIn Launch", 3))
+        blocks.extend(create_paragraph_block(payload.get("linkedin_post", "")))
             
     return blocks

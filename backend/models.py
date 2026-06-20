@@ -16,7 +16,7 @@ def reduce_list(left: Optional[List[Any]], right: Optional[List[Any]]) -> List[A
             merged.append(item)
     return merged
 
-# --- Explicit Sub-Models for Structured LLM Outputs ---
+# --- Explicit Sub-Models ---
 
 class Competitor(BaseModel):
     name: str
@@ -33,24 +33,24 @@ class RoadmapPhase(BaseModel):
     items: List[str]
 
 class ApiEndpoint(BaseModel):
-    method: str
-    path: str
-    description: str
+    method: Optional[str] = "GET"
+    path: Optional[str] = "/"
+    description: Optional[str] = ""
 
 class GitHubIssue(BaseModel):
     title: str
-    body: str
-    labels: List[str]
+    body: Optional[str] = ""
+    labels: List[str] = []
 
 class Sprint(BaseModel):
     name: str
-    issue_titles: List[str]
+    issue_titles: List[str] = []
 
 # --- Agent Output Models ---
 
 class ValidationResult(BaseModel):
     verdict: str
-    risk_score: float  # 0.0-1.0
+    risk_score: float
     reasoning: str
     red_flags: List[str]
 
@@ -69,12 +69,12 @@ class PRD(BaseModel):
 class ArchitectureSpec(BaseModel):
     db_schema_sql: str
     db_schema_mermaid: str
-    api_endpoints: List[ApiEndpoint]
-    system_design_notes: str
+    api_endpoints: List[ApiEndpoint] = []
+    system_design_notes: Optional[str] = "N/A"
 
 class IssuesAndSprintPlan(BaseModel):
-    issues: List[GitHubIssue]
-    sprints: List[Sprint]
+    issues: List[GitHubIssue] = []
+    sprints: List[Sprint] = []
 
 class MarketingAssets(BaseModel):
     landing_copy: str
@@ -88,12 +88,10 @@ class GraphState(BaseModel):
     startup_name: str
     idea: str
     github_repo: str
-    status: str = "running"  # "running" | "awaiting_gate" | "complete" | "failed"
+    status: str = "running"
     
-    # Track status and version of each stage
     stages: Annotated[Dict[str, Any], reduce_dict] = Field(default_factory=dict)
 
-    # Artifact outputs mapping to stage_name
     startup_advisor: Optional[ValidationResult] = None
     market_research: Optional[MarketResearchReport] = None
     product_manager: Optional[PRD] = None
@@ -101,9 +99,7 @@ class GraphState(BaseModel):
     engineering_manager: Optional[IssuesAndSprintPlan] = None
     marketing: Optional[MarketingAssets] = None
 
-    # Track failures
     failed_stages: Annotated[List[str], reduce_list] = Field(default_factory=list)
 
-    # Gate management (interrupts payload)
-    gate_decision: Optional[str] = None  # "continue" | "revise"
+    gate_decision: Optional[str] = None
     revised_idea: Optional[str] = None

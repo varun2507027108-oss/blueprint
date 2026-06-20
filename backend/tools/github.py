@@ -6,9 +6,6 @@ from config import settings
 
 logger = logging.getLogger(__name__)
 
-# Reusable HTTP client
-GITHUB_CLIENT = httpx.AsyncClient(timeout=10.0)
-
 async def create_github_issue(repo: str, title: str, body: str, labels: Optional[List[str]] = None) -> Optional[Dict[str, Any]]:
     if not settings.GITHUB_TOKEN:
         logger.warning("GITHUB_TOKEN is not configured. Skipping issue creation.")
@@ -20,8 +17,9 @@ async def create_github_issue(repo: str, title: str, body: str, labels: Optional
 
     url = f"https://api.github.com/repos/{repo}/issues"
     headers = {
-        "Authorization": f"token {settings.GITHUB_TOKEN}",
+        "Authorization": f"Bearer {settings.GITHUB_TOKEN}", # Bearer is required for fine-grained PATs
         "Accept": "application/vnd.github.v3+json",
+        "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "AI-Founder-OS"
     }
     payload = {
@@ -31,13 +29,15 @@ async def create_github_issue(repo: str, title: str, body: str, labels: Optional
     }
     
     try:
-        response = await GITHUB_CLIENT.post(url, headers=headers, json=payload)
-        if response.status_code == 201:
-            logger.info(f"Successfully created GitHub issue: '{title}' in {repo}")
-            return response.json()
-        else:
-            logger.error(f"Failed to create GitHub issue. Status code: {response.status_code}, Response: {response.text}")
-            return None
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(url, headers=headers, json=payload)
+            if response.status_code == 201:
+                logger.info(f"Successfully created GitHub issue: '{title}' in {repo}")
+                return response.json()
+            else:
+                # This will print the EXACT error from GitHub to your backend terminal
+                logger.error(f"Failed to create GitHub issue. Status: {response.status_code}, Response: {response.text}")
+                return None
     except Exception as e:
         logger.exception(f"Exception occurred while creating GitHub issue: {e}")
         return None
@@ -45,7 +45,6 @@ async def create_github_issue(repo: str, title: str, body: str, labels: Optional
 async def create_github_issues_bulk(repo: str, issues: List[Any]) -> List[Dict[str, Any]]:
     created = []
     for issue in issues:
-        # Convert Pydantic model to dictionary if necessary
         if hasattr(issue, 'model_dump'):
             issue = issue.model_dump()
             

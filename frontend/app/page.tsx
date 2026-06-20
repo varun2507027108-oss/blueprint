@@ -37,7 +37,7 @@ export default function LandingPage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#E8A33D]/5 rounded-full blur-[100px] pointer-events-none"></div>
 
           <div className="max-w-6xl mx-auto w-full relative z-10">
-            <motion.div initial={{opacity: 0, y: 20}} animate={{opacity: 1, y: 0}} transition={{duration: 0.8}}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
               <h1 className="text-4xl md:text-6xl font-bold uppercase tracking-tight leading-[1.1] mb-6">
                 The<br />Blueprint<br />
                 <span className="text-[#E8A33D]">Engine</span>
@@ -46,13 +46,13 @@ export default function LandingPage() {
                 Initialize an isolated workspace. Provide the core thesis. Submit your idea. Six specialized agents validate it, research the market, and produce the PRD, architecture spec, GitHub backlog, and launch copy you need to start building — the complete foundation, not a deployed app.
               </p>
               <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Link 
-                  href="/start" 
+                <Link
+                  href="/start"
                   className="w-full sm:w-auto bg-[#E8A33D] text-base px-8 py-4 text-[11px] font-bold uppercase tracking-[0.15em] hover:bg-[#E8A33D]/90 transition-all text-center border border-[#E8A33D]"
                 >
                   Start a Pipeline
                 </Link>
-                <button 
+                <button
                   onClick={() => scrollTo("pipelines")}
                   className="w-full sm:w-auto bg-panel border border-border-subtle text-text-main px-8 py-4 text-[11px] font-bold uppercase tracking-[0.15em] hover:bg-border-subtle transition-all text-center"
                 >
@@ -65,11 +65,11 @@ export default function LandingPage() {
 
         <section id="pipelines" className="min-h-screen py-24 px-6 border-t border-border-subtle bg-panel relative">
           <div className="max-w-6xl mx-auto">
-            <motion.div 
-               initial={{opacity: 0}}
-               whileInView={{opacity: 1}}
-               viewport={{once: true}}
-               transition={{duration: 0.6}}
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
             >
               <h2 className="text-2xl font-bold uppercase tracking-widest mb-2">The Engine</h2>
               <div className="text-[11px] text-text-muted uppercase tracking-widest mb-16">Coordinated Execution</div>
@@ -89,7 +89,7 @@ export default function LandingPage() {
                     </div>
                     <h3 className="text-[13px] font-bold uppercase tracking-widest mb-2 group-hover:text-[#E8A33D] transition-colors">{agent.name}</h3>
                     <p className="text-[11px] text-text-muted leading-relaxed">{agent.desc}</p>
-                    
+
                     {/* Subtle corner glow on hover */}
                     <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-[#E8A33D]/10 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>

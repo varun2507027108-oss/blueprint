@@ -38,28 +38,60 @@ def update_stage(stages: Optional[Dict[str, Any]], stage_name: str, status: str,
     return current
 
 def safe_serialize(obj) -> str:
-    """Safely serialize a Pydantic model or dictionary to JSON string."""
+    """Safely serialize a Pydantic model, dictionary, or string to JSON string."""
     if obj is None:
         return "None"
     if hasattr(obj, 'model_dump'):
         return json.dumps(obj.model_dump())
     elif isinstance(obj, dict):
         return json.dumps(obj)
+    elif isinstance(obj, str):
+        # Try to parse string as JSON, if fails, return raw string
+        try:
+            return json.dumps(json.loads(obj))
+        except:
+            return json.dumps({"raw": obj})
     return str(obj)
 
 # --- LLM Query Helpers ---
 
-async def call_with_retry(func, *args, **kwargs):
-    for attempt in range(3):
+async def call_with_retry(func, *args, max_attempts=3, **kwargs):
+    for attempt in range(max_attempts):
         try:
             return await func(*args, **kwargs)
         except Exception as e:
             logger.warning(f"Attempt {attempt + 1} failed with error: {e}")
-            if attempt == 2:
+            if attempt == max_attempts - 1:
                 raise e
             await asyncio.sleep(2 ** attempt)
 
-async def query_groq(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
+async def query_groq(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None, model: Optional[str] = None, timeout: float = 30.0, max_attempts: int = 3) -> Dict[str, Any]:
+    key_to_use = api_key or settings.GROQ_API_KEY
+    if not key_to_use:
+        raise ValueError("GROQ_API_KEY is not configured.")
+    
+    model_to_use = model or "llama-3.3-70b-versatile"
+    client = AsyncGroq(api_key=key_to_use, timeout=timeout)
+    
+    async def _call():
+        response = await client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_instruction},
+                {"role": "user", "content": user_prompt}
+            ],
+            model=model_to_use,
+            response_format={"type": "json_object"},
+            temperature=0.1
+        )
+        content = response.choices[0].message.content
+        parsed = json.loads(content)
+        schema(**parsed)  # validate structure
+        return parsed
+        
+    return await call_with_retry(_call, max_attempts=max_attempts)
+
+async def query_groq_creative(system_instruction: str, user_prompt: str, schema: Any, api_key: Optional[str] = None, model: Optional[str] = None) -> Dict[str, Any]:
+    """Uses a higher temperature for creative tasks like marketing copy."""
     key_to_use = api_key or settings.GROQ_API_KEY
     if not key_to_use:
         raise ValueError("GROQ_API_KEY is not configured.")
@@ -75,11 +107,11 @@ async def query_groq(system_instruction: str, user_prompt: str, schema: Any, api
             ],
             model=model_to_use,
             response_format={"type": "json_object"},
-            temperature=0.1
+            temperature=0.85
         )
         content = response.choices[0].message.content
         parsed = json.loads(content)
-        schema(**parsed)  # validate structure
+        schema(**parsed)
         return parsed
         
     return await call_with_retry(_call)
@@ -104,9 +136,13 @@ async def startup_advisor_node(state: GraphState) -> Dict[str, Any]:
     idea_to_validate = state.revised_idea if state.gate_decision == "revise" else state.idea
     
     system_instruction = (
-        "You are the Startup Advisor. Your task is to evaluate the founder's startup idea. "
-        "Assess the risk level (risk_score between 0.0 and 1.0), verdict (e.g. Approved, Needs Revision), "
-        "provide detailed reasoning, and list any red flags. "
+        "You are a top-tier Venture Capitalist and ruthless Startup Advisor. "
+        "Evaluate the provided startup idea strictly on market viability, execution risk, and capital efficiency. "
+        "If this is a revised idea, assume the founder has attempted to address previous feedback. Only assign a high risk_score if the core fatal flaw remains completely unaddressed. "
+        "Provide a definitive verdict (e.g., 'Approved', 'Needs Major Revision', 'Reject'). "
+        "Assign a risk_score between 0.0 (safe) and 1.0 (fatal). "
+        "Your reasoning must be 2-3 concise sentences identifying the biggest existential threat to the startup. "
+        "List 2-3 specific, actionable red_flags (e.g., 'High CAC in saturated market', 'Regulatory hurdles'). "
         "You must return a JSON object with these exact keys: "
         '"verdict" (string), "risk_score" (number), "reasoning" (string), "red_flags" (array of strings).'
     )
@@ -143,7 +179,7 @@ async def startup_advisor_node(state: GraphState) -> Dict[str, Any]:
             version = await asyncio.to_thread(save_artifact, state.session_id, "startup_advisor", result.model_dump())
             await asyncio.to_thread(add_decision_log, state.session_id, "startup_advisor", f"Validated idea '{idea_to_validate}': Verdict={result.verdict}, Risk={result.risk_score}")
         
-        is_high_risk = result.risk_score > 0.7 or len(result.red_flags) >= 3
+        is_high_risk = result.risk_score > 0.85
         
         if is_high_risk:
             stages["startup_advisor"] = {"status": "awaiting_gate", "version": version}
@@ -224,9 +260,10 @@ async def market_research_node(state: GraphState) -> Dict[str, Any]:
         sources = ["https://tavily.com/fallback"]
         
     system_instruction = (
-        "You are the Market Research Agent. Based on the web search results provided, "
-        "estimate the TAM (Total Addressable Market), list top competitors, outline key industry trends, "
-        "and list your sources. Every competitor must have a name, description, and url. "
+        "You are a Senior Market Research Analyst. Synthesize the provided search results into an actionable market report. "
+        "Estimate the TAM (Total Addressable Market) realistically using a bottom-up or top-down approach (1 sentence). "
+        "List exactly 3-4 key competitors, explicitly stating their core weakness or your differentiation. "
+        "Identify 3 macro industry trends driving this market right now. "
         "You must output a valid JSON object with these exact keys: "
         '"tam_estimate" (string), "competitors" (array of objects with name, description, url), '
         '"trends" (array of strings), "sources" (array of strings).'
@@ -268,8 +305,11 @@ async def product_manager_node(state: GraphState) -> Dict[str, Any]:
     market_report_str = safe_serialize(market_report) if market_report else "No market report available."
     
     system_instruction = (
-        "You are the Product Manager. Your task is to write a PRD based on the startup idea and the market research report. "
-        "Include a clear problem statement, user stories, a list of features with priority, and roadmap phases. "
+        "You are a Principal Product Manager. Write a lean, high-impact PRD. "
+        "Define a sharp problem_statement (2 sentences). "
+        "Write 3-4 core user_stories in the format: 'As a [user], I want to [action] so that [value]'. "
+        "List 4-5 features using the MoSCoW prioritization method (Must-have, Should-have) for priority. "
+        "Define a 2-phase roadmap_phases (MVP vs V2). "
         "You must output a valid JSON object with these exact keys: "
         '"problem_statement" (string), "user_stories" (array of strings), '
         '"features" (array of objects with name, description, priority), '
@@ -309,12 +349,18 @@ async def architect_node(state: GraphState) -> Dict[str, Any]:
     prd_str = safe_serialize(prd) if prd else "No PRD available."
     
     system_instruction = (
-        "You are the Software Architect. Create an architecture specification based on the PRD. "
-        "Generate the database schema in SQL, the schema in Mermaid syntax, the list of API endpoints (method, path, description), "
-        "and system design notes. "
-        "You must output a valid JSON object with these exact keys: "
-        '"db_schema_sql" (string), "db_schema_mermaid" (string), '
-        '"api_endpoints" (array of objects with method, path, description), "system_design_notes" (string).'
+        "You are a Principal Software Architect. Design a scalable, lean architecture for an MVP. "
+        "You must output a valid JSON object with exactly these 4 keys: "
+        '"db_schema_sql", "db_schema_mermaid", "api_endpoints", "system_design_notes". '
+        "For db_schema_sql, provide DDL statements only (PostgreSQL syntax). "
+        "For db_schema_mermaid, provide a string that STARTS EXACTLY with 'erDiagram'. "
+        "Do NOT put table definitions before 'erDiagram'. "
+        "CRITICAL: Use specific SQL data types in the mermaid diagram (e.g., VARCHAR(255), TIMESTAMP, BOOLEAN, UUID, INT). "
+        "Include constraints like PK, FK, and UNIQUE. "
+        "Example of correct db_schema_mermaid syntax: "
+        "\"erDiagram\\n  USERS {\\n    UUID id PK\\n    VARCHAR(255) email UNIQUE\\n  }\\n  SESSIONS {\\n    UUID id PK\\n    UUID user_id FK\\n    TIMESTAMP created_at\\n  }\\n  USERS ||--o{ SESSIONS : has\". "
+        "For api_endpoints, provide an array of objects, each with 'method', 'path', and 'description'. "
+        "For system_design_notes, write 2-3 sentences explaining the tech stack."
     )
     prompt = f"Product Requirement Document (PRD):\n{prd_str}"
     
@@ -346,41 +392,75 @@ async def engineering_manager_node(state: GraphState) -> Dict[str, Any]:
     failed_stages = list(state.failed_stages or [])
     stages["engineering_manager"] = {"status": "running", "version": 0}
     
-    spec = state.architect
-    spec_str = safe_serialize(spec) if spec else "No architecture spec available."
-    
-    system_instruction = (
-        "You are the Engineering Manager. Build a sprint plan and list of GitHub issues based on the architecture specification. "
-        "Each issue should have a title, body, and labels. Group issues into named sprints. "
-        "You must output a valid JSON object with these exact keys: "
-        '"issues" (array of objects with title, body, labels), '
-        '"sprints" (array of objects with name, issue_titles).'
-    )
-    prompt = f"Architecture Specification:\n{spec_str}"
-    
     try:
+        # CRITICAL FIX: Safely handle LangGraph state deserialization
+        spec = state.architect
+        if spec is None:
+            spec_str = "No architecture spec available."
+        elif hasattr(spec, 'model_dump'):
+            spec_data = spec.model_dump()
+        elif isinstance(spec, str):
+            try:
+                spec_data = json.loads(spec)
+            except:
+                spec_data = {"system_design_notes": spec}
+        else:
+            # Assume it's a dict
+            spec_data = spec
+            
+        # Only pass the API endpoints and notes to the EM to make the LLM respond 10x faster!
+        spec_str = json.dumps({
+            "api_endpoints": spec_data.get("api_endpoints", []),
+            "system_design_notes": spec_data.get("system_design_notes", "")
+        })
+        
+        system_instruction = (
+            "You are a Senior Engineering Manager. Create a concise sprint plan. "
+            "Create exactly 3 GitHub issues. Keep the body under 20 words. "
+            "You must output a valid JSON object with these exact keys: "
+            '"issues" (array of objects with title, body, labels), '
+            '"sprints" (array of objects with name, issue_titles).'
+        )
+        prompt = f"Architecture Specification:\n{spec_str}"
+        
         api_key = settings.GROQ_API_KEY
         if not api_key:
-            plan = IssuesAndSprintPlan(
-                issues=[{"title": "Setup SQLite Schema", "body": "Create schemas defined in architecture spec.", "labels": ["db", "setup"]}],
-                sprints=[{"name": "Sprint 1", "issue_titles": ["Setup SQLite Schema"]}]
-            )
-            plan_dict = plan.model_dump()
+            plan_dict = {
+                "issues": [{"title": "Setup SQLite Schema", "body": "Create schemas.", "labels": ["db", "setup"]}],
+                "sprints": [{"name": "Sprint 1", "issue_titles": ["Setup SQLite Schema"]}]
+            }
         else:
-            plan_dict = await query_groq(system_instruction, prompt, IssuesAndSprintPlan, api_key=api_key, model="llama-3.3-70b-versatile")
-            plan = IssuesAndSprintPlan(**plan_dict)
+            # CRITICAL FIX: Short timeout and 1 retry to fail fast and prevent UI lockups
+            raw_dict = await query_groq(
+                system_instruction, 
+                prompt, 
+                IssuesAndSprintPlan, 
+                api_key=api_key, 
+                model="llama-3.3-70b-versatile",
+                timeout=15.0,
+                max_attempts=1
+            )
+            
+            # Safe parse. Force the keys to exist so Pydantic never crashes.
+            if not isinstance(raw_dict.get("issues"), list): raw_dict["issues"] = []
+            if not isinstance(raw_dict.get("sprints"), list): raw_dict["sprints"] = []
+                
+            plan_dict = raw_dict
+            
+        plan = IssuesAndSprintPlan(**plan_dict)
             
         version = await asyncio.to_thread(save_artifact, state.session_id, "engineering_manager", plan_dict)
         await asyncio.to_thread(add_decision_log, state.session_id, "engineering_manager", "Compiled issues backlog and sprint timeline.")
         
+        # Trigger GitHub integration in the background so it doesn't block the UI/Pipeline
         if state.github_repo:
             try:
                 from tools.github import create_github_issues_bulk
-                await create_github_issues_bulk(state.github_repo, plan.issues)
-                await asyncio.to_thread(add_decision_log, state.session_id, "engineering_manager", f"Successfully synced issues to GitHub repository: {state.github_repo}")
+                issues_list = [iss.model_dump() if hasattr(iss, 'model_dump') else iss for iss in plan.issues]
+                asyncio.create_task(create_github_issues_bulk(state.github_repo, issues_list))
+                await asyncio.to_thread(add_decision_log, state.session_id, "engineering_manager", f"Started background sync to GitHub repository: {state.github_repo}")
             except Exception as github_err:
-                logger.warning(f"Failed to sync issues to GitHub: {github_err}")
-                await asyncio.to_thread(add_decision_log, state.session_id, "engineering_manager", f"Failed to sync issues to GitHub: {github_err}")
+                logger.warning(f"Failed to start GitHub sync: {github_err}")
                 
         return {"engineering_manager": plan, "stages": {"engineering_manager": {"status": "complete", "version": version}}}
     except Exception as e:
@@ -399,8 +479,12 @@ async def marketing_node(state: GraphState) -> Dict[str, Any]:
     prd_str = safe_serialize(prd) if prd else "No PRD available."
     
     system_instruction = (
-        "You are the Marketing Agent. Generate launch assets based on the startup idea and the PRD. "
-        "Create landing page copy, a LinkedIn launch post, and an email campaign copy. "
+        "You are a world-class Creative Director and Direct-Response Copywriter. "
+        "Your goal is to write emotionally resonant, high-converting launch assets that make people stop scrolling. "
+        "Write landing_copy: Use the AIDA framework. Start with a bold, provocative headline (USE ALL CAPS FOR THE HEADLINE). Follow with a subheadline that agitates a pain point. Provide 3 benefit-driven bullet points (use dashes '- '). End with a strong call-to-action. "
+        "CRITICAL: Do NOT use HTML tags (like <h1>, <ul>, <button>). Use plain text only with line breaks for formatting. "
+        "Write linkedin_post: Tell a short, engaging story about why this startup exists. Be slightly vulnerable and professional. Use line breaks for readability. End with a question to drive engagement. "
+        "Write email_campaign: Write a short, urgency-driven email to a waitlist. Start with a curiosity-inducing subject line (e.g., 'Subject: ...'). Keep the body under 100 words. "
         "You must output a valid JSON object with these exact keys: "
         '"landing_copy" (string), "linkedin_post" (string), "email_campaign" (string). '
         "Do not nest these inside other objects; they must be plain strings at the top level."
@@ -417,7 +501,7 @@ async def marketing_node(state: GraphState) -> Dict[str, Any]:
             )
             assets_dict = assets.model_dump()
         else:
-            assets_dict = await query_groq(system_instruction, prompt, MarketingAssets, api_key=api_key, model="llama-3.3-70b-versatile")
+            assets_dict = await query_groq_creative(system_instruction, prompt, MarketingAssets, api_key=api_key, model="llama-3.3-70b-versatile")
             assets = MarketingAssets(**assets_dict)
             
         version = await asyncio.to_thread(save_artifact, state.session_id, "marketing", assets_dict)

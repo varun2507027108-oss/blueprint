@@ -21,7 +21,17 @@ type PollingMap = {
   };
 };
 
+function parseGithubRepo(input: string): string {
+  if (!input) return "";
+  let clean = input.trim();
+  clean = clean.replace(/^(https?:\/\/)?(www\.)?github\.com\//i, "");
+  clean = clean.replace(/\/$/, "");
+  clean = clean.replace(/\.git$/, "");
+  return clean;
+}
+
 export default function StartPage() {
+
   const router = useRouter();
   const [mode, setMode] = useState<"form" | "polling" | "gate" | "failed">("form");
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -41,12 +51,15 @@ export default function StartPage() {
     const formData = new FormData(e.currentTarget);
     const purpose = formData.get("purpose") as string;
     const building = formData.get("building") as string;
+    const rawRepo = formData.get("github_repo") as string;
+    const cleanRepo = parseGithubRepo(rawRepo);
     
     const payload = {
       startup_name: formData.get("startup_name") as string,
       idea: `Purpose: ${purpose}\n\nWhat we're building: ${building}`,
-      github_repo: formData.get("github_repo") as string,
+      github_repo: cleanRepo,
     };
+
 
     try {
       const res = await fetch(`${BACKEND_URL}/sessions`, {
@@ -185,14 +198,14 @@ export default function StartPage() {
                   <div className="group">
                     <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted mb-2">GitHub Repository (Optional)</label>
                     <div className="flex bg-base border border-border-subtle focus-within:border-[#E8A33D] transition-colors">
-                      <span className="px-4 py-4 border-r border-border-subtle text-text-muted text-[13px] bg-panel/50">github.com/</span>
                       <input
                         name="github_repo"
                         className="w-full bg-transparent p-4 text-[13px] text-text-main focus:outline-none"
-                        placeholder="owner/repo"
+                        placeholder="e.g. owner/repo or full GitHub URL"
                       />
                     </div>
                   </div>
+
 
                   {error && (
                     <div className="p-4 border border-status-failed bg-status-failed/10 text-status-failed text-[11px] uppercase tracking-widest">

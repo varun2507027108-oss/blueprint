@@ -37,7 +37,7 @@ def clean_and_wrap(text: str, max_len: int = 40, is_pre: bool = False) -> str:
 
 def generate_report_html(startup_name: str, session_id: str, artifacts: Dict[str, Any]) -> str:
     """
-    Compile all session artifacts into a beautifully styled HTML template.
+    Compile all session artifacts into a beautifully styled, corporate HTML template.
     """
     advisor = artifacts.get("startup_advisor", {})
     market = artifacts.get("market_research", {})
@@ -58,56 +58,66 @@ def generate_report_html(startup_name: str, session_id: str, artifacts: Dict[str
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{startup_name_wrapped} - AI Founder Launch Report</title>
+    <title>{startup_name_wrapped} - Blueprint</title>
     <style>
+        @page {{ size: letter; margin: 2cm; }}
         body {{
             font-family: Helvetica, Arial, sans-serif;
             color: #1a202c;
-            line-height: 1.6;
-            margin: 40px;
+            line-height: 1.5;
+            margin: 0;
             padding: 0;
             background-color: #ffffff;
+            font-size: 11pt;
         }}
         h1 {{
-            font-size: 28px;
+            font-size: 24pt;
             font-weight: 700;
             color: #0f172a;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 3px solid #1e293b;
             padding-bottom: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }}
         .meta-subtitle {{
-            font-size: 14px;
+            font-size: 10pt;
             color: #64748b;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+            font-family: 'Courier New', Courier, monospace;
         }}
         h2 {{
-            font-size: 20px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-top: 40px;
+            font-size: 16pt;
+            font-weight: 700;
+            color: #ffffff;
+            background-color: #1e293b;
+            padding: 8px 12px;
+            margin-top: 30px;
             margin-bottom: 15px;
-            border-bottom: 1px solid #cbd5e1;
-            padding-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }}
         h3 {{
-            font-size: 16px;
+            font-size: 12pt;
             font-weight: 600;
             color: #334155;
-            margin-top: 25px;
-            margin-bottom: 10px;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            text-transform: uppercase;
         }}
         p {{
-            margin: 0 0 15px 0;
-            font-size: 14px;
+            margin: 0 0 12px 0;
+            font-size: 11pt;
         }}
         .callout {{
             background-color: #f8fafc;
             border-left: 4px solid #3b82f6;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 0 4px 4px 0;
+            font-size: 11pt;
         }}
         .risk-high {{
             border-left: 4px solid #ef4444;
@@ -118,55 +128,110 @@ def generate_report_html(startup_name: str, session_id: str, artifacts: Dict[str
             background-color: #ecfdf5;
         }}
         ul {{
-            margin: 0 0 20px 20px;
+            margin: 0 0 15px 20px;
             padding: 0;
-            font-size: 14px;
+            font-size: 11pt;
         }}
         li {{
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }}
         code, pre {{
             font-family: 'Courier New', Courier, monospace;
             background-color: #f1f5f9;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 13px;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 10pt;
+            color: #d6336c;
         }}
         pre {{
             display: block;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
             overflow-x: auto;
             white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #1a202c;
+        }}
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 10pt;
+        }}
+        th, td {{
+            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
+            text-align: left;
+            vertical-align: top;
+        }}
+        th {{
+            background-color: #f8fafc;
+            font-weight: 700;
+            color: #334155;
+            text-transform: uppercase;
+            font-size: 9pt;
+            letter-spacing: 0.5px;
+        }}
+        tr:nth-child(even) {{
+            background-color: #fcfcfd;
         }}
         .footer {{
-            margin-top: 60px;
+            margin-top: 40px;
             text-align: center;
-            font-size: 12px;
+            font-size: 9pt;
             color: #94a3b8;
             border-top: 1px solid #e2e8f0;
-            padding-top: 20px;
+            padding-top: 15px;
         }}
         .page-break {{
             page-break-before: always;
+        }}
+        .badge {{
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 9pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }}
+        .badge-must {{
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }}
+        .badge-should {{
+            background-color: #fef3c7;
+            color: #b45309;
+        }}
+        .badge-high {{
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }}
+        .badge-med {{
+            background-color: #fef3c7;
+            color: #b45309;
+        }}
+        .badge-low {{
+            background-color: #d1fae5;
+            color: #047857;
         }}
     </style>
 </head>
 <body>
     <h1>{startup_name_wrapped}</h1>
-    <div class="meta-subtitle">AI Founder OS Orchestration Report | Session: {session_id_wrapped}</div>
+    <div class="meta-subtitle">AI Founder OS Blueprint | Session: {session_id_wrapped}</div>
 
     <!-- 1. Startup Advisor -->
-    <h2>1. Startup Advisor Validation</h2>
+    <h2>1. Executive Validation</h2>
     <div class="callout {risk_class}">
         <strong>Verdict:</strong> {clean_and_wrap(advisor.get("verdict", "N/A"), 40)}<br/>
-        <strong>Risk Score:</strong> {risk_score}
+        <strong>Risk Score:</strong> {risk_score}/1.0
     </div>
     <p><strong>Reasoning:</strong> {clean_and_wrap(advisor.get("reasoning", "N/A"), 80)}</p>
     """
     
     if advisor.get("red_flags"):
-        html_content += "<h3>Red Flags Flagged</h3><ul>"
+        html_content += "<h3>Critical Risks</h3><ul>"
         for rf in advisor.get("red_flags", []):
             html_content += f"<li>{clean_and_wrap(rf, 60)}</li>"
         html_content += "</ul>"
@@ -174,23 +239,23 @@ def generate_report_html(startup_name: str, session_id: str, artifacts: Dict[str
     # 2. Market Research
     html_content += f"""
     <div class="page-break"></div>
-    <h2>2. Market Research</h2>
+    <h2>2. Market Intelligence</h2>
     <p><strong>TAM Estimate:</strong> {clean_and_wrap(market.get("tam_estimate", "N/A"), 40)}</p>
     """
     
     if market.get("competitors"):
-        html_content += "<h3>Key Competitors</h3><ul>"
+        html_content += "<h3>Competitor Landscape</h3><table><tr><th>Name</th><th>Description</th><th>URL</th></tr>"
         for comp in market.get("competitors", []):
             comp_name = clean_and_wrap(comp.get('name', ''), 40)
-            comp_desc = clean_and_wrap(comp.get('description', ''), 80)
+            comp_desc = clean_and_wrap(comp.get('description', ''), 60)
             comp_url_raw = comp.get('url', '')
             comp_url_escaped = html.escape(comp_url_raw) if comp_url_raw else "#"
-            comp_url_wrapped = clean_and_wrap(comp_url_raw, 40)
-            html_content += f"<li><strong>{comp_name}</strong>: {comp_desc} (<a href='{comp_url_escaped}'>{comp_url_wrapped}</a>)</li>"
-        html_content += "</ul>"
+            comp_url_wrapped = clean_and_wrap(comp_url_raw, 30)
+            html_content += f"<tr><td><strong>{comp_name}</strong></td><td>{comp_desc}</td><td><a href='{comp_url_escaped}'>{comp_url_wrapped}</a></td></tr>"
+        html_content += "</table>"
         
     if market.get("trends"):
-        html_content += "<h3>Key Market Trends</h3><ul>"
+        html_content += "<h3>Macro Trends</h3><ul>"
         for trend in market.get("trends", []):
             html_content += f"<li>{clean_and_wrap(trend, 80)}</li>"
         html_content += "</ul>"
@@ -206,89 +271,92 @@ def generate_report_html(startup_name: str, session_id: str, artifacts: Dict[str
     # 3. Product Manager
     html_content += f"""
     <div class="page-break"></div>
-    <h2>3. Product Requirement Document (PRD)</h2>
-    <p><strong>Problem Statement:</strong></p>
+    <h2>3. Product Requirements (PRD)</h2>
+    <h3>Problem Statement</h3>
     <p>{clean_and_wrap(prd.get("problem_statement", "N/A"), 80)}</p>
     """
     
     if prd.get("user_stories"):
-        html_content += "<h3>User Stories</h3><ul>"
+        html_content += "<h3>Core User Stories</h3><ul>"
         for story in prd.get("user_stories", []):
             html_content += f"<li>{clean_and_wrap(story, 80)}</li>"
         html_content += "</ul>"
         
     if prd.get("features"):
-        html_content += "<h3>Core Features & Priority</h3><ul>"
+        html_content += "<h3>MVP Feature Scope</h3><table><tr><th>Priority</th><th>Feature</th><th>Description</th></tr>"
         for feat in prd.get("features", []):
-            feat_priority = clean_and_wrap(feat.get('priority', 'Medium'), 40)
-            feat_name = clean_and_wrap(feat.get('name', ''), 40)
-            feat_desc = clean_and_wrap(feat.get('description', ''), 80)
-            html_content += f"<li><strong>[{feat_priority}] {feat_name}</strong>: {feat_desc}</li>"
-        html_content += "</ul>"
+            feat_priority = clean_and_wrap(feat.get('priority', 'Medium'), 10)
+            feat_name = clean_and_wrap(feat.get('name', ''), 30)
+            feat_desc = clean_and_wrap(feat.get('description', ''), 60)
+            
+            # Simple badge mapping
+            p_lower = feat.get('priority', 'Medium').lower()
+            badge_cls = "badge-must" if 'must' in p_lower else ("badge-should" if 'should' in p_lower else ("badge-high" if 'high' in p_lower else ("badge-low" if 'low' in p_lower else "badge-med")))
+            
+            html_content += f"<tr><td><span class='badge {badge_cls}'>{feat_priority}</span></td><td><strong>{feat_name}</strong></td><td>{feat_desc}</td></tr>"
+        html_content += "</table>"
 
     if prd.get("roadmap_phases"):
-        html_content += "<h3>Roadmap Phases</h3><ul>"
+        html_content += "<h3>Roadmap Phases</h3><table><tr><th>Phase</th><th>Key Deliverables</th></tr>"
         for phase in prd.get("roadmap_phases", []):
-            phase_name = clean_and_wrap(phase.get('name', ''), 40)
+            phase_name = clean_and_wrap(phase.get('name', ''), 30)
             items_str = ", ".join(phase.get("items", []))
             items_wrapped = clean_and_wrap(items_str, 60)
-            html_content += f"<li><strong>{phase_name}</strong>: {items_wrapped}</li>"
-        html_content += "</ul>"
+            html_content += f"<tr><td><strong>{phase_name}</strong></td><td>{items_wrapped}</td></tr>"
+        html_content += "</table>"
 
     # 4. Architect
     html_content += f"""
     <div class="page-break"></div>
-    <h2>4. System Architecture Specification</h2>
-    <p><strong>System Design Notes:</strong></p>
+    <h2>4. System Architecture</h2>
+    <h3>System Design Notes</h3>
     <p>{clean_and_wrap(arch.get("system_design_notes", "N/A"), 80)}</p>
     """
     
     if arch.get("db_schema_sql"):
         html_content += f"<h3>Database Schema (SQL)</h3><pre><code>{clean_and_wrap(arch.get('db_schema_sql', ''), 60, is_pre=True)}</code></pre>"
         
-    if arch.get("db_schema_mermaid"):
-        html_content += f"<h3>Architecture Diagram (Mermaid)</h3><pre><code>{clean_and_wrap(arch.get('db_schema_mermaid', ''), 60, is_pre=True)}</code></pre>"
-        
     if arch.get("api_endpoints"):
-        html_content += "<h3>API Endpoints Contract</h3><ul>"
+        html_content += "<h3>API Endpoints Contract</h3><table><tr><th>Method</th><th>Path</th><th>Description</th></tr>"
         for ep in arch.get("api_endpoints", []):
             ep_method = clean_and_wrap(ep.get('method', 'GET'), 10)
             ep_path = clean_and_wrap(ep.get('path', ''), 40)
-            ep_desc = clean_and_wrap(ep.get('description', ''), 80)
-            html_content += f"<li><code>{ep_method} {ep_path}</code> - {ep_desc}</li>"
-        html_content += "</ul>"
+            ep_desc = clean_and_wrap(ep.get('description', ''), 60)
+            html_content += f"<tr><td><code>{ep_method}</code></td><td><strong>{ep_path}</strong></td><td>{ep_desc}</td></tr>"
+        html_content += "</table>"
 
     # 5. Engineering Manager
     html_content += f"""
     <div class="page-break"></div>
-    <h2>5. Sprints and Issues Plan</h2>
+    <h2>5. Delivery Plan</h2>
     """
     
     if em.get("sprints"):
-        html_content += "<h3>Sprint Roadmap</h3><ul>"
+        html_content += "<h3>Sprint Allocation</h3><table><tr><th>Sprint</th><th>Issues</th></tr>"
         for sp in em.get("sprints", []):
-            sp_name = clean_and_wrap(sp.get('name', ''), 40)
+            sp_name = clean_and_wrap(sp.get('name', ''), 30)
             issues_str = ", ".join(sp.get("issue_titles", []))
             issues_wrapped = clean_and_wrap(issues_str, 60)
-            html_content += f"<li><strong>{sp_name}</strong>: {issues_wrapped}</li>"
-        html_content += "</ul>"
+            html_content += f"<tr><td><strong>{sp_name}</strong></td><td>{issues_wrapped}</td></tr>"
+        html_content += "</table>"
         
     if em.get("issues"):
-        html_content += "<h3>GitHub Issues Backlog</h3><ul>"
+        html_content += "<h3>GitHub Issues Backlog</h3>"
         for issue in em.get("issues", []):
             issue_title = clean_and_wrap(issue.get('title', ''), 60)
             labels_str = ", ".join(issue.get("labels", []))
             labels_wrapped = clean_and_wrap(labels_str, 40)
             issue_body = clean_and_wrap(issue.get('body', ''), 80)
-            html_content += f"<li><strong>{issue_title}</strong> (Labels: <code>{labels_wrapped}</code>)<br/>{issue_body}</li>"
-        html_content += "</ul>"
+            html_content += f"<p><strong>{issue_title}</strong><br/><code>Labels: {labels_wrapped}</code><br/>{issue_body}</p>"
 
     # 6. Marketing
     html_content += f"""
     <div class="page-break"></div>
-    <h2>6. Marketing Launch Assets</h2>
+    <h2>6. Go-To-Market Strategy</h2>
     <h3>Landing Page Copy</h3>
-    <p>{clean_and_wrap(mkt.get("landing_copy", "N/A"), 80)}</p>
+    <div class="callout" style="border-left-color: #10b981; background-color: #f0fdf4;">
+        <p style="white-space: pre-wrap; margin:0;">{clean_and_wrap(mkt.get("landing_copy", "N/A"), 80, is_pre=True)}</p>
+    </div>
     
     <h3>LinkedIn Launch Post</h3>
     <p style="white-space: pre-wrap;">{clean_and_wrap(mkt.get("linkedin_post", "N/A"), 80, is_pre=True)}</p>

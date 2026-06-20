@@ -5,6 +5,7 @@ import { BACKEND_URL } from "@/lib/config";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { CustomThemeToggler } from "@/components/theme-toggler";
+import ReactFlowERD from "@/components/ReactFlowERD";
 
 const AGENT_COLORS: Record<string, string> = {
   'startup_advisor': 'bg-[#E8A33D]',
@@ -14,6 +15,35 @@ const AGENT_COLORS: Record<string, string> = {
   'engineering_manager': 'bg-[#F472B6]',
   'marketing': 'bg-[#F87171]'
 };
+
+const THINKING_TEXT: Record<string, string> = {
+  'startup_advisor': 'Evaluating market risks...',
+  'market_research': 'Scanning competitor landscape...',
+  'product_manager': 'Defining feature scope...',
+  'architect': 'Designing database schema...',
+  'engineering_manager': 'Structuring sprint backlog...',
+  'marketing': 'Drafting launch assets...'
+};
+
+// -------- UI Upgrade: Skeleton Loader -------- //
+function SkeletonLoader() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="space-y-2">
+        <div className="h-3 bg-border-subtle rounded w-1/4"></div>
+        <div className="h-8 bg-border-subtle rounded"></div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-3 bg-border-subtle rounded w-1/4"></div>
+        <div className="h-24 bg-border-subtle rounded"></div>
+      </div>
+      <div className="space-y-2">
+        <div className="h-3 bg-border-subtle rounded w-1/4"></div>
+        <div className="h-8 bg-border-subtle rounded"></div>
+      </div>
+    </div>
+  );
+}
 
 // -------- Subcomponents -------- //
 
@@ -46,24 +76,52 @@ function PipelineNode({ id, name, status, delay = 0 }: { id: string, name: strin
   const agentColor = AGENT_COLORS[id] || 'bg-status-pending';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, delay }}
-      className={`border ${borderColor} bg-panel px-4 py-3.5 flex items-center gap-3 w-48 shadow-none transition-all duration-300 z-10 relative`}
-    >
-      <div className={`w-2 h-2 rounded-none ${agentColor} shrink-0 ${isRunning ? 'animate-pulse' : ''}`}></div>
-      <span className={`text-[10px] uppercase tracking-widest truncate ${isComplete || isRunning ? 'text-text-main' : 'text-text-muted'}`} title={name}>{name}</span>
-      <span className={`ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor} ${badgeBg}`}>
-        {status ? status.toUpperCase() : 'WAIT'}
-      </span>
-    </motion.div>
+    <div className="flex flex-col items-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay }}
+        className={`border ${borderColor} bg-panel px-4 py-3.5 flex items-center gap-3 w-48 shadow-none transition-all duration-300 z-10 relative`}
+      >
+        <div className={`w-2 h-2 rounded-none ${agentColor} shrink-0 ${isRunning ? 'animate-pulse' : ''}`}></div>
+        <span className={`text-[10px] uppercase tracking-widest truncate ${isComplete || isRunning ? 'text-text-main' : 'text-text-muted'}`} title={name}>{name}</span>
+        <span className={`ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor} ${badgeBg} ${isRunning ? 'animate-pulse font-bold' : ''}`}>
+          {isRunning ? (THINKING_TEXT[id] || 'THINKING') : (status ? status.toUpperCase() : 'WAIT')}
+        </span>
+      </motion.div>
+      <AnimatePresence>
+        {isRunning && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 0.7, height: 'auto', y: 4 }}
+            exit={{ opacity: 0, height: 0 }}
+            className="text-[9px] text-accent uppercase tracking-widest font-bold mt-1 text-center"
+          >
+            <motion.span
+              animate={{ opacity: [0.4, 1, 0.4] }}
+              transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+            >
+              {THINKING_TEXT[id] || 'AI is analyzing...'}
+            </motion.span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
-function VerticalLine({ active }: { active: boolean }) {
+function ConnectorLine({ active, pulsating }: { active: boolean; pulsating?: boolean }) {
+  let lineClass = active ? 'bg-status-complete' : 'bg-border-subtle';
+  if (pulsating) {
+    lineClass = 'bg-status-complete animate-pulse shadow-[0_0_8px_#3FB950]';
+  }
   return (
-    <div className={`h-6 w-px mx-auto relative ${active ? 'bg-status-complete' : 'bg-border-subtle'}`}></div>
+    <>
+      {/* Vertical line on mobile */}
+      <div className={`h-6 w-px md:hidden relative ${lineClass}`} />
+      {/* Horizontal line on desktop */}
+      <div className={`hidden md:block w-8 h-px relative ${lineClass}`} />
+    </>
   );
 }
 
@@ -84,31 +142,50 @@ function PipelineView({ stages }: { stages: Record<string, any> }) {
         <span className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Workflow DAG</span>
       </div>
 
-      <div className="flex flex-col items-center w-full max-w-2xl mx-auto">
-        <PipelineNode id="startup_advisor" name="Advisor" status={sA} delay={0} />
-        <VerticalLine active={sA === 'complete'} />
-        <PipelineNode id="market_research" name="Market Res" status={mR} delay={0.1} />
-        <VerticalLine active={mR === 'complete'} />
-        <PipelineNode id="product_manager" name="Product Mgr" status={pM} delay={0.2} />
-
-        {/* Fork Line Connector */}
-        <div className={`h-6 w-px ${pM === 'complete' ? 'bg-status-complete' : 'bg-border-subtle'}`}></div>
-        <div className={`w-[16rem] h-px ${pM === 'complete' ? 'bg-status-complete' : 'bg-border-subtle'}`}></div>
-        <div className="flex w-[16rem] justify-between">
-          <div className={`h-6 w-px ${pM === 'complete' ? 'bg-status-complete' : 'bg-border-subtle'}`}></div>
-          <div className={`h-6 w-px ${pM === 'complete' ? 'bg-status-complete' : 'bg-border-subtle'}`}></div>
-        </div>
-
-        {/* Forked Lanes */}
-        <div className="flex justify-center gap-[4rem] w-full">
-          <div className="w-[12rem] flex flex-col items-center">
-            <PipelineNode id="architect" name="Architect" status={ar} delay={0.3} />
-            <VerticalLine active={ar === 'complete'} />
-            <PipelineNode id="engineering_manager" name="Eng Manager" status={em} delay={0.4} />
+      <div className="w-full max-w-5xl mx-auto overflow-x-auto pb-4 hide-scrollbar">
+        <div className="flex flex-col md:flex-row items-center justify-center w-full min-w-max md:min-w-0">
+          {/* Left part: Advisor -> Market Res -> Product Manager */}
+          <div className="flex flex-col md:flex-row items-center">
+            <PipelineNode id="startup_advisor" name="Advisor" status={sA} delay={0} />
+            <ConnectorLine active={sA === 'complete'} pulsating={sA === 'awaiting_gate'} />
+            <PipelineNode id="market_research" name="Market Res" status={mR} delay={0.1} />
+            <ConnectorLine active={mR === 'complete'} />
+            <PipelineNode id="product_manager" name="Product Mgr" status={pM} delay={0.2} />
           </div>
 
-          <div className="w-[12rem] flex flex-col items-center">
-            <PipelineNode id="marketing" name="Marketing" status={mk} delay={0.3} />
+          {/* Fork Section */}
+          <div className="flex flex-col md:flex-row items-center relative w-full md:w-auto">
+            {/* On mobile: vertical line between Product Manager and the branches */}
+            <div className={`h-6 w-px md:hidden ${pM === 'complete' ? 'bg-status-complete' : 'bg-border-subtle'}`} />
+
+            {/* On desktop: horizontal connector from Product Manager to the bracket */}
+            <div className={`hidden md:block w-8 h-px ${pM === 'complete' ? 'bg-status-complete' : 'bg-border-subtle'}`} />
+
+            {/* The two parallel branches */}
+            <div className="relative pl-0 md:pl-8 flex flex-col gap-6 md:gap-8 w-full md:w-auto">
+              {/* Desktop branch bracket */}
+              <div 
+                className={`hidden md:block absolute left-0 top-[26px] bottom-[26px] w-8 border-l border-t border-b ${
+                  pM === 'complete' ? 'border-status-complete' : 'border-border-subtle'
+                }`} 
+              />
+
+              {/* Row 1: Architect -> Eng Manager */}
+              <div className="flex flex-col md:flex-row items-center">
+                {/* On mobile: vertical line connection */}
+                <div className={`h-6 w-px md:hidden ${pM === 'complete' ? 'bg-status-complete' : 'bg-border-subtle'}`} />
+                <PipelineNode id="architect" name="Architect" status={ar} delay={0.3} />
+                <ConnectorLine active={ar === 'complete'} />
+                <PipelineNode id="engineering_manager" name="Eng Manager" status={em} delay={0.4} />
+              </div>
+
+              {/* Row 2: Marketing */}
+              <div className="flex flex-col md:flex-row items-center">
+                {/* On mobile: vertical line connection */}
+                <div className={`h-6 w-px md:hidden ${pM === 'complete' ? 'bg-status-complete' : 'bg-border-subtle'}`} />
+                <PipelineNode id="marketing" name="Marketing" status={mk} delay={0.3} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -333,10 +410,8 @@ function ArtifactDisplay({ stage, data }: { stage: string; data: any }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Entity Relationship (Mermaid)</span>
-              <pre className="border border-border-subtle bg-panel p-4 text-[12px] text-text-main overflow-x-auto whitespace-pre">
-                {data.db_schema_mermaid}
-              </pre>
+              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Entity Relationship Diagram</span>
+              <ReactFlowERD chart={data.db_schema_mermaid} />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -447,44 +522,101 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 function RemoteArtifactViewer({ sessionId, stage, stageStatus, artifactData }: { sessionId: string, stage: string, stageStatus?: string, artifactData?: any }) {
-  const [data, setData] = useState<any>(artifactData || null);
+  const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    // If we already have the data from the main poll, use it.
-    if (artifactData) {
-      setData(artifactData);
-      return;
-    }
-
-    // If stage isn't complete, don't try to fetch yet.
-    if (stageStatus !== 'complete') {
-      return;
-    }
-
     let isMounted = true;
+    let timeoutId: NodeJS.Timeout;
+
     const fetchArtifact = async () => {
+      if (stageStatus !== 'complete' || data || artifactData) return;
       try {
         const res = await fetch(`${BACKEND_URL}/sessions/${sessionId}/artifacts/${stage}`);
         if (res.ok) {
           const json = await res.json();
-          if (isMounted) setData(json);
+          if (isMounted) {
+            setData(json);
+            return;
+          }
         }
-      } catch (e) { }
+      } catch (e) {
+        console.error("Artifact fetch error:", e);
+      }
+      
+      // Schedule retry after 2 seconds if still mounted
+      if (isMounted) {
+        timeoutId = setTimeout(fetchArtifact, 2000);
+      }
     };
+
     fetchArtifact();
-    return () => { isMounted = false; };
-  }, [sessionId, stage, stageStatus, artifactData]);
 
-  if (stageStatus !== 'complete' && !data) {
-    return <div className="text-text-muted font-mono text-[11px] uppercase tracking-widest italic flex items-center justify-center h-48 border border-dashed border-border-subtle bg-base">Awaiting operational output...</div>;
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [sessionId, stage, stageStatus, artifactData, data]);
+
+  const displayData = artifactData || data;
+
+  if (stageStatus === 'running') {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 border border-dashed border-accent/30 bg-accent/[0.02] space-y-6 min-h-[300px]">
+        <div className="relative w-10 h-10">
+          <div className="absolute inset-0 rounded-full border-2 border-accent/20"></div>
+          <div className="absolute inset-0 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
+        </div>
+        <div className="text-[10px] text-accent uppercase tracking-[0.2em] font-bold animate-pulse font-mono">
+          Agent is generating artifact...
+        </div>
+        <div className="max-w-md w-full opacity-40 pt-4">
+          <SkeletonLoader />
+        </div>
+      </div>
+    );
   }
-  if (!data) return <div className="text-accent font-mono text-[11px] uppercase tracking-widest flex items-center justify-center h-48 animate-pulse border border-border-subtle bg-panel">Downloading artifact data...</div>;
 
-  return <ArtifactDisplay stage={stage} data={data} />;
+  if (stageStatus !== 'complete' && !displayData) {
+    return (
+      <div className="text-text-muted font-mono text-[11px] uppercase tracking-widest italic flex items-center justify-center h-48 border border-dashed border-border-subtle bg-base">
+        Awaiting operational output...
+      </div>
+    );
+  }
+
+  if (!displayData) {
+    return (
+      <div className="border border-border-subtle bg-panel p-6 space-y-6 w-full font-mono">
+        <SkeletonLoader />
+      </div>
+    );
+  }
+
+  return <ArtifactDisplay stage={stage} data={displayData} />;
 }
 
 function TabsViewer({ sessionId, activeStatuses, artifacts }: { sessionId: string, activeStatuses: Record<string, string>, artifacts: Record<string, any> }) {
   const [activeTab, setActiveTab] = useState(STAGES[0]);
+  const [isManual, setIsManual] = useState(false);
+
+  useEffect(() => {
+    setIsManual(false);
+    setActiveTab(STAGES[0]);
+  }, [sessionId]);
+
+  useEffect(() => {
+    if (!isManual) {
+      const runningStage = STAGES.find(s => activeStatuses[s] === 'running');
+      if (runningStage) {
+        setActiveTab(runningStage);
+      } else {
+        const latestComplete = [...STAGES].reverse().find(s => activeStatuses[s] === 'complete');
+        if (latestComplete) {
+          setActiveTab(latestComplete);
+        }
+      }
+    }
+  }, [activeStatuses, isManual]);
 
   return (
     <div className="border border-border-subtle bg-base flex flex-col shadow-none mt-8">
@@ -512,7 +644,10 @@ function TabsViewer({ sessionId, activeStatuses, artifacts }: { sessionId: strin
           return (
             <button
               key={s}
-              onClick={() => setActiveTab(s)}
+              onClick={() => {
+                setIsManual(true);
+                setActiveTab(s);
+              }}
               className={`shrink-0 px-5 py-4 font-mono text-[9px] font-bold uppercase tracking-[0.1em] transition-colors relative flex items-center gap-3 ${isActive ? 'text-text-main bg-base' : 'text-text-muted hover:bg-base/50 hover:text-text-main'
                 }`}
             >
@@ -632,7 +767,7 @@ function ExportActions({ sessionId }: { sessionId: string }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col sm:flex-row gap-3 w-full pt-6 md:pt-8 border-t border-border-subtle mt-8"
+      className="flex flex-col sm:flex-row gap-3 w-full pt-6 md:p-8 border-t border-border-subtle mt-8"
     >
       <div className="flex-1 flex gap-0 border border-border-subtle overflow-hidden">
         <button
@@ -669,6 +804,8 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
   const [isRetrying, setIsRetrying] = useState(false);
 
   useEffect(() => {
+    if (!id) return;
+
     let timeoutId: NodeJS.Timeout;
     let isMounted = true;
     let currentStatus = "running";
@@ -683,7 +820,12 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
         }
 
         if (!isMounted) return;
-        setData(json);
+        setData((prevData: any) => {
+          if (json.status === "running" && prevData?.status === "awaiting_gate") {
+            return { ...json, gate: prevData.gate };
+          }
+          return json;
+        });
         setError(null);
         setIsRetrying(false);
         currentStatus = json.status;
@@ -693,7 +835,6 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
       }
 
       if (isMounted && currentStatus !== "complete" && currentStatus !== "failed") {
-        // Changed from 4000ms to 1500ms to catch fast LLM executions
         timeoutId = setTimeout(poll, 1500);
       }
     };
@@ -724,9 +865,31 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
   }
 
   const activeStatuses = Object.fromEntries(Object.entries(data.stages || {}).map(([k, v]: any) => [k, v.status]));
+  const completedCount = STAGES.filter(s => activeStatuses[s] === 'complete').length;
+  const progressPercent = (completedCount / STAGES.length) * 100;
+  const isAnyStageRunning = STAGES.some(s => activeStatuses[s] === 'running');
+
+  const isBlurred = data.gate?.triggered && !data.gate.resolved;
+  const blurClasses = isBlurred ? "blur-sm opacity-40 pointer-events-none transition-all duration-300" : "transition-all duration-300";
 
   return (
     <div className="max-w-[1500px] mx-auto p-6 md:p-10 space-y-8 min-h-screen font-mono">
+      {/* Global Progress Bar */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-border-subtle overflow-hidden">
+        <motion.div
+          className="h-full bg-accent shadow-[0_0_8px_rgba(232,163,61,0.5)]"
+          initial={{ width: 0 }}
+          animate={{
+            width: `${progressPercent}%`,
+            ...(isAnyStageRunning ? { opacity: [0.6, 1, 0.6] } : { opacity: 1 })
+          }}
+          transition={{
+            width: { duration: 0.5, ease: "easeOut" },
+            ...(isAnyStageRunning ? { opacity: { repeat: Infinity, duration: 1.5, ease: "easeInOut" } } : { duration: 0.2 })
+          }}
+        />
+      </div>
+
       {isRetrying && (
         <div className="fixed top-0 left-0 right-0 bg-status-failed text-base text-[10px] uppercase font-bold py-2 px-4 tracking-widest z-50 text-center shadow-lg border-b border-status-failed">
           Connection Interrupted. Attempting to restore telemetry...
@@ -751,36 +914,38 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
           <div className="text-[10px] text-text-muted uppercase tracking-widest font-bold mt-2">Session ID</div>
           <div className="text-[11px] text-text-main bg-panel border-border-subtle border px-3 py-1">{data.session_id}</div>
           <div className={`mt-2 px-4 py-1.5 text-[9px] font-bold uppercase tracking-widest border ${data.status === 'complete' ? 'border-status-complete text-status-complete bg-status-complete/10' :
-              data.status === 'failed' ? 'border-status-failed text-status-failed bg-status-failed/10' :
-                'border-accent text-accent bg-accent/5 animate-pulse shadow-[0_0_10px_rgba(232,163,61,0.15)]'
+            data.status === 'failed' ? 'border-status-failed text-status-failed bg-status-failed/10' :
+              'border-accent text-accent bg-accent/5 animate-pulse shadow-[0_0_10px_rgba(232,163,61,0.15)]'
             }`}>
             {data.status === 'awaiting_gate' ? 'PAUSED. PENDING REVIEW' : data.status}
           </div>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start pt-4">
-        {/* Left Column = Workflow & Logs */}
-        <div className="xl:col-span-4 space-y-8 flex flex-col">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}>
+      <div className="flex flex-col gap-8 items-stretch pt-4">
+        {/* Top Section */}
+        <div className={blurClasses}>
+          <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <PipelineView stages={data.stages || {}} />
-
-            <AnimatePresence>
-              {data.gate?.triggered && !data.gate.resolved && (
-                <div className="mt-8">
-                  <GateCard id={id} gate={data.gate} />
-                </div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-            <DecisionLogPanel sessionId={id} isComplete={data.status === 'complete' || data.status === 'failed'} />
           </motion.div>
         </div>
 
-        {/* Right Column = Content Inspector */}
-        <div className="xl:col-span-8 flex flex-col">
+        {/* Middle Section */}
+        <div className={isBlurred ? "grid grid-cols-1 md:grid-cols-2 gap-8 items-start" : "w-full"}>
+          {isBlurred && (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
+              <GateCard id={id} gate={data.gate} />
+            </motion.div>
+          )}
+          <div className={blurClasses}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+              <DecisionLogPanel sessionId={id} isComplete={data.status === 'complete' || data.status === 'failed'} />
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className={blurClasses}>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <TabsViewer sessionId={id} activeStatuses={activeStatuses} artifacts={data.artifacts || {}} />
 
