@@ -9,8 +9,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Operations Console',
-  description: 'AI Startup Pipeline',
+  title: 'Blueprint',
+  description: 'AI Founder Orchestration System',
 };
 
 export default function RootLayout({
