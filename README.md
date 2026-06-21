@@ -1,27 +1,22 @@
-# 🧬 blueprint.ai — AI Founder Orchestration System
+# 🧬 Blueprint.ai — AI Founder Orchestration System
+*From raw prompt to investor-ready founder package in 90 seconds.*
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Frontend-Next.js%2015-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js 15" />
-  <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Orchestration-LangGraph-2C3E50?style=for-the-badge&logo=python&logoColor=white" alt="LangGraph" />
-  <img src="https://img.shields.io/badge/Database-SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
-</p>
+Blueprint.ai is a stateful, multi-agent AI pipeline built to orchestrate the journey from a raw startup idea to a fully structured, ready-to-build project. By leveraging a parallel-branching path architecture and a human-in-the-loop (HITL) gate interrupt, it transforms a simple text prompt into a cohesive founder suite: VC validation reports, competitor intelligence, a Product Requirements Document (PRD), PostgreSQL schemas, development backlog sprints, promotional copy, and exportable PDF/Notion deliverables.
 
-`blueprint.ai` is a stateful, multi-agent AI pipeline designed to orchestrate the journey from a raw startup idea to a fully structured, ready-to-build project. By leveraging a parallel-branching path architecture and a **human-in-the-loop gate interrupt**, it transforms a simple text prompt into a cohesive founder package: validation reports, competitor research, a Product Requirements Document (PRD), database schemas, development backlog sprints, promotional copy, and exportable PDF/Notion deliverables.
+## 🏛️ System Architecture
+The workflow is managed as a stateful graph using **LangGraph**, executing specialized agents sequentially and in parallel.
 
----
-
-## 🗺️ System Architecture
-
-The workflow is managed as a stateful graph using **LangGraph**, executing specialized agents sequentially and in parallel, while maintaining transaction checkpoints in a local SQLite database.
+- **Execution State**: LangGraph checkpointing (local SQLite) handles pause/resume/replay logic for the HITL gate.
+- **Persistent Data**: All artifacts, decision logs, and session history are permanently stored in **Supabase (PostgreSQL)**.
+- **LLMOps**: All core agent logic runs exclusively on **Groq** using **Llama 3.3 70B** to deliver near-zero latency, utilizing strict prompt engineering frameworks (JTBD, MoSCoW, AIDA, PAS).
 
 ```mermaid
 graph TD
-    Start([ Founder Submits Idea ]) --> Advisor[1. Startup Advisor]
-    Advisor --> Gate{Risk Assessment Gate}
+    Start([ Start: Raw Idea ]) --> Advisor[1. Startup Advisor]
+    Advisor --> Gate{Human-in-the-Loop Gate}
     
-    Gate -- Risk >= 0.85 --> Interrupted([ Awaiting Revision ])
-    Interrupted --> Resume[Founder Revises Idea]
+    Gate -- Risk >= 0.85 --> Interrupted([ Revise ])
+    Interrupted --> Resume[Force Execute]
     Resume --> Advisor
     
     Gate -- Risk < 0.85 --> Researcher[2. Market Researcher]
@@ -33,98 +28,88 @@ graph TD
     
     Architect --> EM[5. Engineering Manager]
     
-    EM --> Join[Compile Reports & Sync integrations]
+    EM --> Join[Join & Finalize]
     Marketing --> Join
     
-    Join --> End([ Complete Dashboard & PDF/Notion Export ])
+    Join --> End([ End: Export to PDF / Notion / GitHub ])
 ```
-
----
 
 ## 👥 The Agent Network
 
-All core agent logic runs exclusively on **Groq** using the high-performance **Llama 3.3 70B** model (`llama-3.3-70b-versatile`) to deliver production-grade outputs.
+### 1. 💡 Startup Advisor (The VC Partner)
+Acts as the initial filter and risk gatekeeper. Evaluates the raw concept for feasibility, market saturation, and execution bottlenecks from a Sequoia/a16z lens.
+- **HITL Risk Interrupt**: If the computed risk score exceeds `0.85`, it triggers a system-level graph interrupt. The UI blurs, pausing execution until the founder chooses to bypass or revise the idea.
+- **Outputs**: Verdict, risk score, primary existential threats, and actionable red flags.
 
-### 1. 💡 Startup Advisor
-*   **Core Mission**: Acts as the initial filter and risk gatekeeper. It evaluates the raw concept for feasibility, market saturation, and execution bottlenecks from a VC partner's lens.
-*   **Risk Interrupt**: If the computed risk score exceeds `0.85`, it triggers a system-level interrupt. The graph pauses execution and awaits user intervention (either to bypass/continue or to revise the idea).
-*   **Outputs**: Verdict, risk score, primary existential threats, and actionable red flags.
+### 2. 🔍 Market Researcher (The Analyst)
+Pulls real-time external competitive intelligence via the **Tavily Search API** to ground the startup thesis in current market realities.
+- **Outputs**: TAM/SAM/SOM estimates, 2x2 SWOT analysis, competitor weakness breakdowns, macro trends (Why Now?), and citation sources.
 
-### 2. 🔍 Market Researcher
-*   **Core Mission**: Pulls real-time external competitive intelligence to ground the startup thesis in current market realities.
-*   **Tooling**: Integrated with **Tavily Search API** for real-time web crawling.
-*   **Outputs**: TAM/SAM/SOM estimates, competitor weakness breakdowns, macro trends, and citation sources.
+### 3. 📋 Product Manager (The Builder)
+Synthesizes the core concept and competitor research into a ruthlessly prioritized product specification.
+- **Outputs**: Customer-centric problem statement, North Star/Activation/Business success metrics, Jobs-to-be-Done (JTBD) user stories, MoSCoW prioritized feature sets, and a 2-phase release roadmap.
 
-### 3. 📋 Product Manager
-*   **Core Mission**: Synthesizes the core startup concept and the competitor research into a prioritized product specification.
-*   **Outputs**: A two-sentence user-centric problem statement, success metrics (North Star, Activation, Business), Jobs-to-be-Done user stories, MoSCoW prioritized feature sets, and a 2-phase release roadmap.
+### 4. 📐 System Architect (The Staff Engineer)
+Designs the technical foundation for the product specified in the PRD.
+- **Outputs**: PostgreSQL DDL schema with relational indexing, interactive visual database diagrams (rendered via React Flow), RESTful API endpoint contracts, and system design/security notes.
 
-### 4. 📐 System Architect
-*   **Core Mission**: Designs the technical foundation for the product specified in the PRD, generating concrete schemas and interface contracts.
-*   **Outputs**: PostgreSQL DDL schema with relational indexing, visual database diagrams in Mermaid.js ER notation, restful API endpoint contracts, and system design/security notes.
+### 5. ⚙️ Engineering Manager (The Scrum Master)
+Deconstructs technical specifications into actionable development cycles. Automated background sync pushes issues directly to GitHub.
+- **Outputs**: Context-driven issue tickets (Context + DoD + Technical Notes), Fibonacci story points, 4 dependency-ordered sprints, tech debt risks, and recommended team sizing.
 
-### 5. ⚙️ Engineering Manager
-*   **Core Mission**: Deconstructs technical specifications into actionable development cycles and issue logs.
-*   **Tooling**: Automated background sync to **GitHub Issues** when a target repository is specified.
-*   **Outputs**: Actionable issue tickets (Context + DoD + Technical Notes), Fibonacci story points, 4 dependency-ordered sprints, and recommended team sizing.
+### 6. 📣 Marketing Specialist (The Growth Lead)
+Converts product capabilities into high-converting promotional copy and launch sequences.
+- **Outputs**: Landing page copy (PAS framework), LinkedIn launch posts, urgency-driven email campaigns, a 5-step drip email sequence, Good/Better/Best pricing plans, and a 90-day GTM calendar.
 
-### 6. 📣 Marketing Specialist
-*   **Core Mission**: Converts product capabilities into high-converting promotional copy and launch marketing sequences.
-*   **Outputs**: Landing page copy (PAS framework), LinkedIn launch posts, email campaigns, a 5-step drip email sequence, good/better/best pricing plans, and a 90-day plan.
+## 🚀 Key Features & Integrations
 
----
+- **Interactive React Flow ERD**: The Architect agent outputs raw Mermaid syntax, which the frontend parses and renders into a sleek, pan-and-zoomable, dark-mode database diagram.
+- **Dynamic Multi-User Notion Auth**: Users securely input their own Notion API credentials via the UI sidebar. The backend dynamically overrides the default `.env` tokens, creating Notion pages directly in the user's workspace.
+- **Stateful Pipeline Recovery**: Powered by LangGraph checkpointers, sessions can be paused at the HITL gate, resumed days later, or re-run from previous nodes without losing context.
+- **Auto-Advancing UI Telemetry**: The dashboard features a YouTube-style global progress bar, "Agent Thinking..." context spinners, and auto-advancing tabs that follow the pipeline execution flow.
+- **Premium PDF Compiler**: A custom xhtml2pdf engine converts the session artifacts into a 6-section, VC-grade blueprint booklet with color-coded story points, SWOT grids, and email timelines.
 
-## 🚀 Key Integrations & Features
+## 🛠️ Tech Stack
 
--   **Stateful Pipeline Recovery**: Powered by `LangGraph` checkpointers, sessions can be paused, resumed, or re-run from previous nodes without losing context.
--   **GitHub Integration**: Push the generated issue backlog directly to your GitHub repository automatically in the background.
--   **Notion Exporter**: Seamlessly package and sync the entire founder suite (sprints, PRD, schemas, copy) to your Notion workspace in formatted database pages.
--   **xhtml2pdf Compiler**: Generate a beautifully structured, styled, and printable PDF founder booklet directly from the session dashboard.
--   **Hover-Reveal Navigation Panel**: Modern UI sidebar providing quick access to integrations, history, and workspace settings.
-
----
-
-## 📂 Project Structure
-
-```directory
-├── backend/
-│   ├── main.py              # FastAPI server & REST endpoints
-│   ├── graph.py             # LangGraph workflow, nodes, and routing rules
-│   ├── models.py            # Pydantic schemas & state models
-│   ├── db.py                # SQLite persistence and artifact handlers
-│   ├── config.py            # Pydantic Settings configuration loader
-│   ├── requirements.txt     # Python backend dependencies
-│   └── tools/               # Tavily search, GitHub sync, Notion sync, PDF compiler
-└── frontend/
-    ├── app/                 # Next.js 15 pages (start page, dashboard console)
-    ├── components/          # Reusable components (Sidebar, logs, panels)
-    ├── lib/                 # Next.js configurations
-    ├── package.json         # Node.js configurations
-    └── tsconfig.json        # TypeScript configuration
-```
-
----
+| Category | Technology |
+| :--- | :--- |
+| **Frontend** | Next.js 15 (App Router), TypeScript, TailwindCSS, Framer Motion, React Flow |
+| **Backend** | FastAPI, Python 3, Pydantic V2, Uvicorn |
+| **AI / Orchestration** | LangGraph, Groq (Llama 3.3 70B) |
+| **Database / Auth** | Supabase (PostgreSQL), LocalStorage (History/Creds) |
+| **Integrations** | Tavily Search API, GitHub Issues API, Notion API, xhtml2pdf |
 
 ## ⚙️ Environment Configuration
 
-Set up a `.env` file in the root of the project with the following configuration:
+### Backend Setup
+Set up a `.env` file in the `backend/` directory:
 
 ```env
 # Groq API Configuration (Required)
 GROQ_API_KEY=your_groq_api_key
 GROQ_MODEL=llama-3.3-70b-versatile
 
-# Search Tool Configuration (Required for Market Research)
+# Supabase Configuration (Required for Persistence)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your_supabase_anon_key
+
+# Search Tool (Required for Market Research)
 TAVILY_API_KEY=your_tavily_api_key
 
-# GitHub Integration (Optional)
+# GitHub Integration (Optional - Used for auto-syncing issues)
 GITHUB_TOKEN=your_github_personal_access_token
 
-# Notion Integration (Optional)
+# Notion Integration (Optional - Default fallback credentials)
 NOTION_TOKEN=your_notion_integration_token
 NOTION_DATABASE_ID=your_notion_database_id
 
 # Server Configurations
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ALLOWED_ORIGIN=http://localhost:3000
+```
+
+### Frontend Setup
+Set up a `.env.local` file in the `frontend/` directory:
+
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 ```
