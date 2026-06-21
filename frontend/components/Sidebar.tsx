@@ -82,13 +82,13 @@ export default function Sidebar() {
       <div className="flex items-center justify-center w-14 h-16 shrink-0 relative">
         <img 
           src="/logo-dark.png" 
-          alt="Logo Light Theme" 
-          className="absolute w-8 h-8 object-contain transition-opacity duration-300 opacity-100 dark:opacity-0 pointer-events-none" 
+          alt="Logo" 
+          className="w-8 h-8 object-contain absolute transition-opacity duration-200 block dark:hidden" 
         />
         <img 
           src="/logo-light.png" 
-          alt="Logo Dark Theme" 
-          className="absolute w-8 h-8 object-contain transition-opacity duration-300 opacity-0 dark:opacity-100 pointer-events-none" 
+          alt="Logo" 
+          className="w-8 h-8 object-contain absolute transition-opacity duration-200 hidden dark:block" 
         />
       </div>
 
