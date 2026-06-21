@@ -27,12 +27,6 @@
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Language-Python%203.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
 
-<br/>
-[![Made by](https://img.shields.io/badge/Made%20with%20%E2%9D%A4%EF%B8%8F%20by-PARALLAX-F59E0B?style=flat-square)](https://github.com/varun2507027108-oss)
-
-</div>
-
----
 
 ## 📖 What is Blueprint?
 
