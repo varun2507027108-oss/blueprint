@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     NOTION_TOKEN: str = Field(default="")
     NOTION_DATABASE_ID: str = Field(default="")
     
+    # Supabase Configs
+    SUPABASE_URL: str = Field(default="")
+    SUPABASE_KEY: str = Field(default="")
+    
     # Server Configs
     NEXT_PUBLIC_BACKEND_URL: str = Field(default="")
     ALLOWED_ORIGIN: str = Field(default="http://localhost:3000")

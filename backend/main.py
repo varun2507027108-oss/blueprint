@@ -3,7 +3,7 @@ import os
 import uuid
 import logging
 import asyncio
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from config import settings
-from db import init_db, get_latest_artifact, get_decision_log
+from db import get_latest_artifact, get_decision_log, save_session, update_session_status, get_sessions_by_ids
 from graph import create_graph, init_saver
 from tools.pdf_export import export_to_pdf
 from tools.notion import create_notion_page, translate_artifact_to_notion_blocks, append_notion_blocks
@@ -35,6 +35,11 @@ class GateDecisionRequest(BaseModel):
 
 class ExportRequest(BaseModel):
     target: str  # "pdf" | "notion"
+    notion_token: Optional[str] = None
+    notion_database_id: Optional[str] = None
+
+class HistoryRequest(BaseModel):
+    session_ids: List[str]
 
 # Active sessions registry to handle race conditions on quick state queries
 ACTIVE_SESSIONS: Dict[str, Dict[str, Any]] = {}
@@ -42,7 +47,6 @@ ACTIVE_SESSIONS: Dict[str, Dict[str, Any]] = {}
 # Lifespan context manager for LangGraph SqliteSaver checkpointer
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
     async with init_saver("checkpoints.db") as saver:
         app.state.saver = saver
         app.state.graph = create_graph(saver)
@@ -90,6 +94,7 @@ async def resume_graph_in_background(graph: Any, command: Command, config: Dict[
 @app.post("/sessions")
 async def create_session(payload: CreateSessionRequest):
     session_id = str(uuid.uuid4())
+    save_session(session_id, payload.startup_name, payload.idea)
     logger.info(f"Creating new session: {session_id} for startup: {payload.startup_name}")
 
     ACTIVE_SESSIONS[session_id] = {
@@ -158,6 +163,12 @@ async def get_session(id: str):
                 break
     elif not snapshot.next and status == "running" and snapshot.values:
         status = "complete"
+
+    try:
+        if status in ["complete", "failed"]:
+            update_session_status(id, status)
+    except Exception as e:
+        logger.warning(f"Failed to update session status in DB: {e}")
 
     active_stage = None
     if status == "running":
@@ -263,10 +274,19 @@ async def export_session(id: str, payload: ExportRequest):
             raise HTTPException(status_code=502, detail=f"Failed to generate PDF report: {str(e)}")
 
     elif payload.target == "notion":
+        token = payload.notion_token or settings.NOTION_TOKEN
+        db_id = payload.notion_database_id or settings.NOTION_DATABASE_ID
+        if not token or not db_id:
+            raise HTTPException(status_code=502, detail="Missing Notion credentials. Please configure them in the sidebar or backend settings.")
         try:
-            page_id = await create_notion_page(startup_name, id)
+            page_id = await create_notion_page(
+                startup_name,
+                id,
+                token=payload.notion_token,
+                db_id=payload.notion_database_id
+            )
             if not page_id:
-                raise HTTPException(status_code=502, detail="Failed to create parent Notion page. Check NOTION_TOKEN and NOTION_DATABASE_ID configuration.")
+                raise HTTPException(status_code=502, detail="Failed to create parent Notion page. Check Notion configuration in sidebar or settings.")
 
             all_blocks = []
             for stage_name in stages_list:
@@ -276,7 +296,12 @@ async def export_session(id: str, payload: ExportRequest):
                     all_blocks.extend(blocks)
 
             if all_blocks:
-                success = await append_notion_blocks(page_id, all_blocks)
+                success = await append_notion_blocks(
+                    page_id,
+                    all_blocks,
+                    token=payload.notion_token,
+                    db_id=payload.notion_database_id
+                )
                 if not success:
                     raise HTTPException(status_code=502, detail="Created page, but failed to append content blocks.")
 
@@ -293,3 +318,7 @@ async def export_session(id: str, payload: ExportRequest):
 
     else:
         raise HTTPException(status_code=400, detail="Invalid target. Must be 'pdf' or 'notion'")
+
+@app.post("/sessions/history")
+async def get_session_history(req: HistoryRequest):
+    return get_sessions_by_ids(req.session_ids)

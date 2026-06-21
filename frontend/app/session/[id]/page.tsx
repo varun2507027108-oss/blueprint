@@ -5,7 +5,13 @@ import { BACKEND_URL } from "@/lib/config";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { CustomThemeToggler } from "@/components/theme-toggler";
-import ReactFlowERD from "@/components/ReactFlowERD";
+import Sidebar from "@/components/Sidebar";
+import dynamic from 'next/dynamic';
+
+const ReactFlowERD = dynamic(() => import("@/components/ReactFlowERD"), {
+  ssr: false,
+  loading: () => <div className="text-text-muted text-[11px] font-mono p-4 animate-pulse">Loading diagram engine...</div>
+});
 
 const AGENT_COLORS: Record<string, string> = {
   'startup_advisor': 'bg-[#E8A33D]',
@@ -24,26 +30,6 @@ const THINKING_TEXT: Record<string, string> = {
   'engineering_manager': 'Structuring sprint backlog...',
   'marketing': 'Drafting launch assets...'
 };
-
-// -------- UI Upgrade: Skeleton Loader -------- //
-function SkeletonLoader() {
-  return (
-    <div className="space-y-6 animate-pulse">
-      <div className="space-y-2">
-        <div className="h-3 bg-border-subtle rounded w-1/4"></div>
-        <div className="h-8 bg-border-subtle rounded"></div>
-      </div>
-      <div className="space-y-2">
-        <div className="h-3 bg-border-subtle rounded w-1/4"></div>
-        <div className="h-24 bg-border-subtle rounded"></div>
-      </div>
-      <div className="space-y-2">
-        <div className="h-3 bg-border-subtle rounded w-1/4"></div>
-        <div className="h-8 bg-border-subtle rounded"></div>
-      </div>
-    </div>
-  );
-}
 
 // -------- Subcomponents -------- //
 
@@ -86,7 +72,7 @@ function PipelineNode({ id, name, status, delay = 0 }: { id: string, name: strin
         <div className={`w-2 h-2 rounded-none ${agentColor} shrink-0 ${isRunning ? 'animate-pulse' : ''}`}></div>
         <span className={`text-[10px] uppercase tracking-widest truncate ${isComplete || isRunning ? 'text-text-main' : 'text-text-muted'}`} title={name}>{name}</span>
         <span className={`ml-auto text-[8px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor} ${badgeBg} ${isRunning ? 'animate-pulse font-bold' : ''}`}>
-          {isRunning ? (THINKING_TEXT[id] || 'THINKING') : (status ? status.toUpperCase() : 'WAIT')}
+          {isRunning ? (THINKING_TEXT[id] || 'THINKING') : status ? status.toUpperCase() : 'WAIT'}
         </span>
       </motion.div>
       <AnimatePresence>
@@ -95,7 +81,7 @@ function PipelineNode({ id, name, status, delay = 0 }: { id: string, name: strin
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 0.7, height: 'auto', y: 4 }}
             exit={{ opacity: 0, height: 0 }}
-            className="text-[9px] text-accent uppercase tracking-widest font-bold mt-1 text-center"
+            className="text-[10px] text-accent uppercase tracking-widest font-bold mt-1 text-center"
           >
             <motion.span
               animate={{ opacity: [0.4, 1, 0.4] }}
@@ -110,9 +96,9 @@ function PipelineNode({ id, name, status, delay = 0 }: { id: string, name: strin
   );
 }
 
-function ConnectorLine({ active, pulsating }: { active: boolean; pulsating?: boolean }) {
+function ConnectorLine({ active, gateActive }: { active: boolean, gateActive?: boolean }) {
   let lineClass = active ? 'bg-status-complete' : 'bg-border-subtle';
-  if (pulsating) {
+  if (gateActive) {
     lineClass = 'bg-status-complete animate-pulse shadow-[0_0_8px_#3FB950]';
   }
   return (
@@ -147,7 +133,7 @@ function PipelineView({ stages }: { stages: Record<string, any> }) {
           {/* Left part: Advisor -> Market Res -> Product Manager */}
           <div className="flex flex-col md:flex-row items-center">
             <PipelineNode id="startup_advisor" name="Advisor" status={sA} delay={0} />
-            <ConnectorLine active={sA === 'complete'} pulsating={sA === 'awaiting_gate'} />
+            <ConnectorLine active={sA === 'complete'} gateActive={sA === 'awaiting_gate'} />
             <PipelineNode id="market_research" name="Market Res" status={mR} delay={0.1} />
             <ConnectorLine active={mR === 'complete'} />
             <PipelineNode id="product_manager" name="Product Mgr" status={pM} delay={0.2} />
@@ -164,10 +150,9 @@ function PipelineView({ stages }: { stages: Record<string, any> }) {
             {/* The two parallel branches */}
             <div className="relative pl-0 md:pl-8 flex flex-col gap-6 md:gap-8 w-full md:w-auto">
               {/* Desktop branch bracket */}
-              <div 
-                className={`hidden md:block absolute left-0 top-[26px] bottom-[26px] w-8 border-l border-t border-b ${
-                  pM === 'complete' ? 'border-status-complete' : 'border-border-subtle'
-                }`} 
+              <div
+                className={`hidden md:block absolute left-0 top-[26px] bottom-[26px] w-8 border-l border-t border-b ${pM === 'complete' ? 'border-status-complete' : 'border-border-subtle'
+                  }`}
               />
 
               {/* Row 1: Architect -> Eng Manager */}
@@ -222,24 +207,24 @@ function GateCard({ id, gate }: { id: string, gate: any }) {
       <div className="relative z-10">
         <div className="flex items-center gap-3 mb-6 border-b border-border-subtle pb-4">
           <div className="w-2 h-2 rounded-full bg-accent animate-ping"></div>
-          <h2 className="text-accent text-[13px] uppercase tracking-widest font-bold">Human-in-the-Loop Review Required</h2>
+          <h2 className="text-accent text-sm uppercase tracking-widest font-bold">Human-in-the-Loop Review Required</h2>
         </div>
 
         <div className="space-y-4 mb-8">
           <div className="flex justify-between items-baseline border-b border-border-subtle pb-2">
-            <span className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Verdict</span>
+            <span className="text-[11px] text-text-muted uppercase tracking-widest font-bold">Verdict</span>
             <span className="text-[12px] text-text-main font-bold">{gate.result?.verdict}</span>
           </div>
           <div className="flex justify-between items-baseline border-b border-border-subtle pb-2">
-            <span className="text-[10px] text-text-muted uppercase tracking-widest font-bold">Risk Score</span>
-            <span className="text-[12px] text-accent font-bold">{gate.result?.risk_score}</span>
+            <span className="text-[11px] text-text-muted uppercase tracking-widest font-bold">Risk Score</span>
+            <span className="text-[13px] text-accent font-bold">{gate.result?.risk_score}</span>
           </div>
-          <div className="text-[12px] leading-relaxed text-text-main pt-2">
+          <div className="text-[13px] leading-relaxed text-text-main pt-2">
             {gate.result?.reasoning}
           </div>
           <div className="bg-base border border-border-subtle p-4 mt-4">
-            <span className="block text-[10px] text-status-failed uppercase tracking-widest mb-3 font-bold">Red Flags Triggered:</span>
-            <ul className="text-[11px] text-text-main space-y-3">
+            <span className="block text-[11px] text-status-failed uppercase tracking-widest mb-3 font-bold">Red Flags Triggered:</span>
+            <ul className="text-xs text-text-main space-y-3">
               {gate.result?.red_flags?.map((r: string, i: number) => (
                 <li key={i} className="flex gap-3">
                   <span className="text-status-failed text-[10px] mt-0.5">■</span> {r}
@@ -301,8 +286,8 @@ function GateCard({ id, gate }: { id: string, gate: any }) {
 function DataBlock({ label, value, isLongText, list }: { label: string, value?: string, isLongText?: boolean, list?: string[] }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">{label}</span>
-      <div className={`border border-border-subtle bg-panel p-4 text-text-main text-[13px] leading-relaxed ${isLongText ? 'whitespace-pre-wrap' : ''}`}>
+      <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">{label}</span>
+      <div className={`border border-border-subtle bg-panel p-4 text-text-main text-sm leading-relaxed ${isLongText ? 'whitespace-pre-wrap' : ''}`}>
         {value && <>{value}</>}
         {list && (
           <ul className="space-y-2">
@@ -344,7 +329,7 @@ function ArtifactDisplay({ stage, data }: { stage: string; data: any }) {
             <DataBlock label="TAM Estimate" value={data.tam_estimate} />
             <DataBlock label="Key Trends" list={data.trends} />
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Competitor Force Matrix</span>
+              <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">Competitor Force Matrix</span>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {data.competitors?.map((c: any, i: number) => (
                   <div key={i} className="border border-border-subtle bg-panel p-4">
@@ -361,13 +346,17 @@ function ArtifactDisplay({ stage, data }: { stage: string; data: any }) {
       case 'product_manager':
         return (
           <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <DataBlock label="Goals" list={data.goals} />
+              <DataBlock label="Success Metrics" list={data.success_metrics} />
+            </div>
             <DataBlock label="Problem Statement" value={data.problem_statement} isLongText />
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <DataBlock label="User Stories" list={data.user_stories} />
 
               <div className="flex flex-col gap-2">
-                <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Core Features</span>
+                <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">Core Features</span>
                 <div className="border border-border-subtle bg-panel p-4 space-y-4">
                   {data.features?.map((f: any, i: number) => (
                     <div key={i} className="flex flex-col gap-1 pb-4 border-b border-border-subtle last:border-0 last:pb-0">
@@ -383,7 +372,7 @@ function ArtifactDisplay({ stage, data }: { stage: string; data: any }) {
             </div>
 
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Roadmap Phases</span>
+              <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">Roadmap Phases</span>
               <div className="border border-border-subtle bg-panel p-4 space-y-6">
                 {data.roadmap_phases?.map((p: any, i: number) => (
                   <div key={i} className="flex flex-col gap-3">
@@ -403,19 +392,19 @@ function ArtifactDisplay({ stage, data }: { stage: string; data: any }) {
             <DataBlock label="System Design Notes" value={data.system_design_notes} isLongText />
 
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Schema SQL Definition</span>
+              <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">Schema SQL Definition</span>
               <pre className="border border-border-subtle bg-panel p-4 text-[12px] text-text-main overflow-x-auto whitespace-pre">
                 {data.db_schema_sql}
               </pre>
             </div>
 
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Entity Relationship Diagram</span>
+              <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">Entity Relationship Diagram</span>
               <ReactFlowERD chart={data.db_schema_mermaid} />
             </div>
 
             <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">API Routes Binding</span>
+              <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">API Routes Binding</span>
               <div className="border border-border-subtle bg-panel overflow-hidden">
                 <table className="w-full text-left text-sm border-collapse min-w-full">
                   <thead>
@@ -441,48 +430,117 @@ function ArtifactDisplay({ stage, data }: { stage: string; data: any }) {
         );
       case 'engineering_manager':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">GitHub Issues</span>
-              <div className="border border-border-subtle bg-panel p-4 space-y-4">
-                {data.issues?.map((iss: any, i: number) => (
-                  <div key={i} className="pb-4 border-b border-border-subtle last:border-0 last:pb-0">
-                    <div className="text-text-main text-[13px] font-bold mb-2">{iss.title}</div>
-                    <div className="text-text-muted text-[12px] mb-3 leading-relaxed">{iss.body}</div>
-                    <div className="flex flex-wrap gap-2">
-                      {iss.labels?.map((l: string, idx: number) => (
-                        <span key={idx} className="text-[9px] bg-base border border-border-subtle text-text-muted px-1.5 py-0.5 uppercase tracking-widest font-bold">
-                          {l}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+          <div className="flex flex-col gap-6">
+            {data.sprints?.map((sprint: any, i: number) => (
+              <div key={i} className="border border-border-subtle bg-panel p-4">
+                <div className="text-[11px] uppercase tracking-widest font-bold text-text-main border-b border-border-subtle pb-2 mb-4">{sprint.name}</div>
+                <div className="space-y-4">
+                  {sprint.issue_titles?.map((title: string, idx: number) => {
+                    const issue = data.issues?.find((iss: any) => iss.title === title);
+                    if (!issue) return null;
+                    return (
+                      <div key={idx} className="pb-4 border-b border-border-subtle last:border-0 last:pb-0">
+                        <div className="flex justify-between items-start mb-2 gap-2">
+                          <div className="text-text-main text-[13px] font-bold">{issue.title}</div>
+                          {issue.story_points && (
+                            <span className="text-[9px] bg-purple-500/20 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 uppercase tracking-widest font-bold shrink-0">
+                              {issue.story_points} PT
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-text-muted text-[12px] mb-3 leading-relaxed">{issue.body}</div>
+                        <div className="flex flex-wrap gap-2">
+                          {issue.labels?.map((l: string, lidx: number) => (
+                            <span key={lidx} className="text-[9px] bg-base border border-border-subtle text-text-muted px-1.5 py-0.5 uppercase tracking-widest font-bold">
+                              {l}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
+            ))}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {data.definition_of_done && data.definition_of_done.length > 0 && (
+                <DataBlock label="Definition of Done" list={data.definition_of_done} />
+              )}
+              {data.tech_debt_risks && data.tech_debt_risks.length > 0 && (
+                <DataBlock label="Tech Debt Risks" list={data.tech_debt_risks} />
+              )}
             </div>
-            <div className="flex flex-col gap-2">
-              <span className="text-[10px] uppercase tracking-widest text-text-muted font-bold">Sprint Blocks</span>
-              <div className="border border-border-subtle bg-panel p-4 space-y-6">
-                {data.sprints?.map((s: any, i: number) => (
-                  <div key={i} className="flex flex-col gap-2">
-                    <div className="text-[11px] uppercase tracking-widest font-bold text-text-main border-b border-border-subtle pb-1">{s.name}</div>
-                    <ul className="text-[12px] text-text-muted space-y-2 mt-1">
-                      {s.issue_titles?.map((t: string, idx: number) => <li key={idx} className="flex gap-2"><span className="text-border-subtle">-</span> {t}</li>)}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </div>
+            
+            {data.team_size_recommended && (
+              <DataBlock label="Recommended Team Size" value={data.team_size_recommended} />
+            )}
           </div>
         );
       case 'marketing':
         return (
           <div className="space-y-6">
             <DataBlock label="Landing Page Copy" value={data.landing_copy} isLongText />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <DataBlock label="LinkedIn Social Post" value={data.linkedin_post} isLongText />
-              <DataBlock label="Email Drip Campaign" value={data.email_campaign} isLongText />
-            </div>
+            <DataBlock label="LinkedIn Social Post" value={data.linkedin_post} isLongText />
+            
+            {data.pricing_tiers && data.pricing_tiers.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">Pricing Strategy</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {data.pricing_tiers.map((tier: any, i: number) => (
+                    <div key={i} className="border border-border-subtle bg-panel p-4">
+                      <div className="flex justify-between items-center mb-3 border-b border-border-subtle pb-2">
+                        <span className="text-text-main text-[13px] font-bold uppercase">{tier.model}</span>
+                        <span className="text-accent text-[12px] font-bold">{tier.price}</span>
+                      </div>
+                      <ul className="space-y-2 text-[12px] text-text-muted">
+                        {tier.features?.map((f: string, fidx: number) => (
+                          <li key={fidx} className="flex gap-2"><span className="text-border-subtle">-</span> {f}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {data.email_sequence && data.email_sequence.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">Email Drip Campaign</span>
+                <div className="border-l-2 border-accent/30 pl-4 space-y-6">
+                  {data.email_sequence.map((step: any, i: number) => (
+                    <div key={i} className="relative">
+                      <div className="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-accent"></div>
+                      <div className="flex justify-between items-baseline mb-1">
+                        <span className="text-text-main text-[12px] font-bold">{step.subject}</span>
+                        <span className="text-[9px] text-text-muted uppercase tracking-widest">{step.send_day}</span>
+                      </div>
+                      <div className="text-[10px] text-accent uppercase tracking-widest mb-2 font-bold">Goal: {step.goal}</div>
+                      <p className="text-text-muted text-[12px] leading-relaxed whitespace-pre-wrap">{step.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {data.ninety_day_plan && data.ninety_day_plan.length > 0 && (
+              <DataBlock label="90-Day Launch Plan" list={data.ninety_day_plan} />
+            )}
+
+            {data.launch_channels && data.launch_channels.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] uppercase tracking-widest text-text-muted font-bold">Launch Channels</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {data.launch_channels.map((ch: any, i: number) => (
+                    <div key={i} className="border border-border-subtle bg-panel p-4">
+                      <div className="text-text-main text-[13px] font-bold uppercase mb-1">{ch.channel}</div>
+                      <div className="text-[12px] text-text-muted mb-2 leading-relaxed">{ch.tactic}</div>
+                      <div className="text-[10px] text-accent uppercase tracking-widest font-bold">Reach: {ch.expected_reach}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         );
       default:
@@ -522,101 +580,65 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 function RemoteArtifactViewer({ sessionId, stage, stageStatus, artifactData }: { sessionId: string, stage: string, stageStatus?: string, artifactData?: any }) {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<any>(artifactData || null);
 
   useEffect(() => {
-    let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
+    // If we already have the data from the main poll, use it.
+    if (artifactData) {
+      setData(artifactData);
+      return;
+    }
 
+    // If stage isn't complete, don't try to fetch yet.
+    if (stageStatus !== 'complete') {
+      return;
+    }
+
+    let isMounted = true;
     const fetchArtifact = async () => {
-      if (stageStatus !== 'complete' || data || artifactData) return;
       try {
         const res = await fetch(`${BACKEND_URL}/sessions/${sessionId}/artifacts/${stage}`);
         if (res.ok) {
           const json = await res.json();
-          if (isMounted) {
-            setData(json);
-            return;
-          }
+          if (isMounted) setData(json);
         }
-      } catch (e) {
-        console.error("Artifact fetch error:", e);
-      }
-      
-      // Schedule retry after 2 seconds if still mounted
-      if (isMounted) {
-        timeoutId = setTimeout(fetchArtifact, 2000);
-      }
+      } catch (e) { }
     };
-
     fetchArtifact();
+    return () => { isMounted = false; };
+  }, [sessionId, stage, stageStatus, artifactData]);
 
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-    };
-  }, [sessionId, stage, stageStatus, artifactData, data]);
-
-  const displayData = artifactData || data;
-
-  if (stageStatus === 'running') {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 border border-dashed border-accent/30 bg-accent/[0.02] space-y-6 min-h-[300px]">
-        <div className="relative w-10 h-10">
-          <div className="absolute inset-0 rounded-full border-2 border-accent/20"></div>
-          <div className="absolute inset-0 rounded-full border-2 border-accent border-t-transparent animate-spin"></div>
-        </div>
-        <div className="text-[10px] text-accent uppercase tracking-[0.2em] font-bold animate-pulse font-mono">
-          Agent is generating artifact...
-        </div>
-        <div className="max-w-md w-full opacity-40 pt-4">
-          <SkeletonLoader />
-        </div>
-      </div>
-    );
+  if (stageStatus !== 'complete' && !data) {
+    return <div className="text-text-muted font-mono text-[11px] uppercase tracking-widest italic flex items-center justify-center h-48 border border-dashed border-border-subtle bg-base">Awaiting operational output...</div>;
   }
+  if (!data) return <div className="text-accent font-mono text-[11px] uppercase tracking-widest flex items-center justify-center h-48 animate-pulse border border-border-subtle bg-panel">Downloading artifact data...</div>;
 
-  if (stageStatus !== 'complete' && !displayData) {
-    return (
-      <div className="text-text-muted font-mono text-[11px] uppercase tracking-widest italic flex items-center justify-center h-48 border border-dashed border-border-subtle bg-base">
-        Awaiting operational output...
-      </div>
-    );
-  }
-
-  if (!displayData) {
-    return (
-      <div className="border border-border-subtle bg-panel p-6 space-y-6 w-full font-mono">
-        <SkeletonLoader />
-      </div>
-    );
-  }
-
-  return <ArtifactDisplay stage={stage} data={displayData} />;
+  return <ArtifactDisplay stage={stage} data={data} />;
 }
 
 function TabsViewer({ sessionId, activeStatuses, artifacts }: { sessionId: string, activeStatuses: Record<string, string>, artifacts: Record<string, any> }) {
   const [activeTab, setActiveTab] = useState(STAGES[0]);
-  const [isManual, setIsManual] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
 
+  // Auto-advance logic
   useEffect(() => {
-    setIsManual(false);
-    setActiveTab(STAGES[0]);
-  }, [sessionId]);
+    if (manualMode) return;
 
-  useEffect(() => {
-    if (!isManual) {
-      const runningStage = STAGES.find(s => activeStatuses[s] === 'running');
-      if (runningStage) {
-        setActiveTab(runningStage);
-      } else {
-        const latestComplete = [...STAGES].reverse().find(s => activeStatuses[s] === 'complete');
-        if (latestComplete) {
-          setActiveTab(latestComplete);
-        }
-      }
+    // Find currently running stage
+    const runningStage = STAGES.find(s => activeStatuses[s] === 'running');
+    if (runningStage) {
+      setActiveTab(runningStage);
+    } else {
+      // If none running, find latest complete
+      const latestComplete = STAGES.filter(s => activeStatuses[s] === 'complete').pop();
+      if (latestComplete) setActiveTab(latestComplete);
     }
-  }, [activeStatuses, isManual]);
+  }, [activeStatuses, manualMode]);
+
+  const handleTabClick = (s: string) => {
+    setManualMode(true);
+    setActiveTab(s);
+  };
 
   return (
     <div className="border border-border-subtle bg-base flex flex-col shadow-none mt-8">
@@ -644,18 +666,15 @@ function TabsViewer({ sessionId, activeStatuses, artifacts }: { sessionId: strin
           return (
             <button
               key={s}
-              onClick={() => {
-                setIsManual(true);
-                setActiveTab(s);
-              }}
-              className={`shrink-0 px-5 py-4 font-mono text-[9px] font-bold uppercase tracking-[0.1em] transition-colors relative flex items-center gap-3 ${isActive ? 'text-text-main bg-base' : 'text-text-muted hover:bg-base/50 hover:text-text-main'
+              onClick={() => handleTabClick(s)}
+              className={`shrink-0 px-5 py-4 font-mono text-[10px] font-bold uppercase tracking-[0.1em] transition-colors relative flex items-center gap-3 ${isActive ? 'text-text-main bg-base' : 'text-text-muted hover:bg-base/50 hover:text-text-main'
                 }`}
             >
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 ${AGENT_COLORS[s]} opacity-80`}></div>
                 {STAGE_LABELS[s]}
               </div>
-              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor} ${badgeBg}`}>
+              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${badgeColor} ${badgeBg}`}>
                 {status ? status.toUpperCase() : 'WAIT'}
               </span>
               {isActive && (
@@ -705,25 +724,25 @@ function DecisionLogPanel({ sessionId, isComplete }: { sessionId: string, isComp
   return (
     <div className="bg-base border border-border-subtle shadow-none flex flex-col h-full max-h-[400px]">
       <div className="bg-panel border-b border-border-subtle p-4 flex items-center justify-between">
-        <span className="font-mono text-[10px] uppercase tracking-widest text-text-main font-bold">System Log</span>
+        <span className="font-mono text-xs uppercase tracking-widest text-text-main font-bold">System Log</span>
         {!isComplete && <span className="w-1.5 h-1.5 bg-accent rounded-full animate-pulse shadow-[0_0_8px_rgba(232,163,61,0.5)]"></span>}
       </div>
       <div className="overflow-y-auto p-4 space-y-3 flex-1 font-mono">
         {entries.length === 0 ? (
-          <div className="text-text-muted text-[11px] italic py-4">Awaiting operational records...</div>
+          <div className="text-text-muted text-xs italic py-4">Awaiting operational records...</div>
         ) : (
           entries.map((e, i) => (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               key={i}
-              className="flex flex-col text-[10px]"
+              className="flex flex-col gap-1 border-b border-border-subtle/30 pb-2.5 last:border-0 last:pb-0 text-xs"
             >
-              <div className="flex items-center gap-3 mb-1">
-                <span className="text-text-muted">[{new Date(e.created_at).toLocaleTimeString()}]</span>
-                <span className={`${AGENT_COLORS[e.stage_name] ? AGENT_COLORS[e.stage_name].replace('bg-', 'text-') : 'text-accent'} uppercase tracking-widest font-bold`}>{e.stage_name}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-text-muted text-[11px]">[{new Date(e.created_at).toLocaleTimeString()}]</span>
+                <span className={`${AGENT_COLORS[e.stage_name] ? AGENT_COLORS[e.stage_name].replace('bg-', 'text-') : 'text-accent'} text-[11px] uppercase tracking-widest font-bold`}>{e.stage_name}</span>
               </div>
-              <span className="text-text-main">{e.reasoning}</span>
+              <span className="text-text-main text-[13px] leading-relaxed">{e.reasoning}</span>
             </motion.div>
           ))
         )}
@@ -740,13 +759,29 @@ function ExportActions({ sessionId }: { sessionId: string }) {
 
   const handleExport = async (target: "pdf" | "notion") => {
     const isPdf = target === 'pdf';
-    isPdf ? setLoadingPdf(true) : setLoadingNotion(true);
+    if (isPdf) {
+      setLoadingPdf(true);
+    } else {
+      const token = localStorage.getItem("notion_token");
+      const dbId = localStorage.getItem("notion_database_id");
+      if (!token || !dbId) {
+        alert("Please connect your Notion account in the sidebar before exporting.");
+        return;
+      }
+      setLoadingNotion(true);
+    }
 
     try {
+      const body: any = { target };
+      if (target === 'notion') {
+        body.notion_token = localStorage.getItem("notion_token");
+        body.notion_database_id = localStorage.getItem("notion_database_id");
+      }
+
       const res = await fetch(`${BACKEND_URL}/sessions/${sessionId}/export`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         const data = await res.json();
@@ -767,28 +802,28 @@ function ExportActions({ sessionId }: { sessionId: string }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col sm:flex-row gap-3 w-full pt-6 md:p-8 border-t border-border-subtle mt-8"
+      className="flex flex-col sm:flex-row gap-3 w-full pt-6 md:pt-8 border-t border-border-subtle mt-8"
     >
       <div className="flex-1 flex gap-0 border border-border-subtle overflow-hidden">
         <button
           onClick={() => handleExport('pdf')}
           disabled={loadingPdf}
-          className="flex-1 bg-panel text-text-main font-mono text-[9px] font-bold uppercase tracking-widest py-4 px-4 hover:bg-base transition-colors"
+          className="flex-1 bg-panel text-text-main font-mono text-[10px] font-bold uppercase tracking-widest py-4 px-4 hover:bg-base transition-colors"
         >
           {loadingPdf ? 'GENERATING...' : pdfUrl ? 'EXPORTED ✓' : 'EXPORT DATA TO PDF'}
         </button>
-        {pdfUrl && <a href={pdfUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center px-6 bg-accent text-base hover:bg-opacity-90 font-mono text-[9px] font-bold transition-opacity">VIEW</a>}
+        {pdfUrl && <a href={pdfUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center px-6 bg-accent text-base hover:bg-opacity-90 font-mono text-[10px] font-bold transition-opacity">VIEW</a>}
       </div>
 
       <div className="flex-1 flex gap-0 border border-border-subtle overflow-hidden">
         <button
           onClick={() => handleExport('notion')}
           disabled={loadingNotion}
-          className="flex-1 bg-panel text-text-main font-mono text-[9px] font-bold uppercase tracking-widest py-4 px-4 hover:bg-base transition-colors"
+          className="flex-1 bg-panel text-text-main font-mono text-[10px] font-bold uppercase tracking-widest py-4 px-4 hover:bg-base transition-colors"
         >
           {loadingNotion ? 'PUSHING...' : notionUrl ? 'SYNCED ✓' : 'PUSH TO NOTION HUB'}
         </button>
-        {notionUrl && <a href={notionUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center px-6 bg-accent text-base hover:bg-opacity-90 font-mono text-[9px] font-bold transition-opacity">VIEW</a>}
+        {notionUrl && <a href={notionUrl} target="_blank" rel="noreferrer" className="flex items-center justify-center px-6 bg-accent text-base hover:bg-opacity-90 font-mono text-[10px] font-bold transition-opacity">VIEW</a>}
       </div>
     </motion.div>
   )
@@ -803,9 +838,20 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
   const [error, setError] = useState<string | null>(null);
   const [isRetrying, setIsRetrying] = useState(false);
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
   useEffect(() => {
     if (!id) return;
+    try {
+      const mySessions = JSON.parse(localStorage.getItem("my_sessions") || "[]");
+      if (!mySessions.includes(id)) {
+        mySessions.push(id);
+        localStorage.setItem("my_sessions", JSON.stringify(mySessions));
+      }
+    } catch (e) {}
+  }, [id]);
 
+  useEffect(() => {
     let timeoutId: NodeJS.Timeout;
     let isMounted = true;
     let currentStatus = "running";
@@ -857,9 +903,12 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
 
   if (!data) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center text-text-muted font-mono text-[11px] tracking-widest uppercase gap-3">
-        <span className="w-2 h-2 rounded-full bg-text-muted animate-pulse"></span>
-        Synchronizing Data stream...
+      <div className="max-w-[1500px] mx-auto p-6 md:p-10 space-y-8 min-h-screen font-mono">
+        <div className="h-24 bg-panel border border-border-subtle animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="h-96 bg-panel border border-border-subtle animate-pulse" />
+          <div className="h-96 bg-panel border border-border-subtle animate-pulse md:col-span-2" />
+        </div>
       </div>
     );
   }
@@ -873,7 +922,10 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
   const blurClasses = isBlurred ? "blur-sm opacity-40 pointer-events-none transition-all duration-300" : "transition-all duration-300";
 
   return (
-    <div className="max-w-[1500px] mx-auto p-6 md:p-10 space-y-8 min-h-screen font-mono">
+    <div className="flex min-h-screen font-mono bg-base text-text-main">
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${sidebarOpen ? 'ml-72' : 'ml-0'}`}>
+        <div className="max-w-[1500px] mx-auto p-6 md:p-10 space-y-8">
       {/* Global Progress Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-border-subtle overflow-hidden">
         <motion.div
@@ -901,7 +953,7 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-border-subtle pb-6 gap-6"
+        className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-border-subtle pb-6 gap-6 pt-16"
       >
         <div className="max-w-2xl">
           <h1 className="text-3xl lg:text-4xl text-text-main font-bold tracking-tight mb-2 uppercase">{data.startup_name}</h1>
@@ -911,7 +963,7 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
           <div className="flex items-center gap-4">
             <CustomThemeToggler />
           </div>
-          <div className="text-[10px] text-text-muted uppercase tracking-widest font-bold mt-2">Session ID</div>
+          <div className="text-[11px] text-text-muted uppercase tracking-widest font-bold mt-2">Session ID</div>
           <div className="text-[11px] text-text-main bg-panel border-border-subtle border px-3 py-1">{data.session_id}</div>
           <div className={`mt-2 px-4 py-1.5 text-[9px] font-bold uppercase tracking-widest border ${data.status === 'complete' ? 'border-status-complete text-status-complete bg-status-complete/10' :
             data.status === 'failed' ? 'border-status-failed text-status-failed bg-status-failed/10' :
@@ -923,28 +975,23 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
       </motion.div>
 
       <div className="flex flex-col gap-8 items-stretch pt-4">
-        {/* Top Section */}
+        {/* Review Gate Section */}
+        <AnimatePresence>
+          {isBlurred && (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
+              <GateCard id={id} gate={data.gate} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Top Section = Flow Diagram */}
         <div className={blurClasses}>
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
             <PipelineView stages={data.stages || {}} />
           </motion.div>
         </div>
 
-        {/* Middle Section */}
-        <div className={isBlurred ? "grid grid-cols-1 md:grid-cols-2 gap-8 items-start" : "w-full"}>
-          {isBlurred && (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }}>
-              <GateCard id={id} gate={data.gate} />
-            </motion.div>
-          )}
-          <div className={blurClasses}>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
-              <DecisionLogPanel sessionId={id} isComplete={data.status === 'complete' || data.status === 'failed'} />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Bottom Section */}
+        {/* Middle Section = Content Inspector / Agents Output */}
         <div className={blurClasses}>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
             <TabsViewer sessionId={id} activeStatuses={activeStatuses} artifacts={data.artifacts || {}} />
@@ -956,6 +1003,15 @@ export default function SessionDashboard({ params }: { params: Promise<{ id: str
             </AnimatePresence>
           </motion.div>
         </div>
+
+        {/* Bottom Section = System Log */}
+        <div className={blurClasses}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+            <DecisionLogPanel sessionId={id} isComplete={data.status === 'complete' || data.status === 'failed'} />
+          </motion.div>
+        </div>
+      </div>
+      </div>
       </div>
     </div>
   )

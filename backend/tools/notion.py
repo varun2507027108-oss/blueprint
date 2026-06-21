@@ -8,9 +8,10 @@ logger = logging.getLogger(__name__)
 NOTION_VERSION = "2022-06-28"
 NOTION_CLIENT = httpx.AsyncClient(timeout=30.0)
 
-def get_headers() -> Dict[str, str]:
+def get_headers(token: Optional[str] = None) -> Dict[str, str]:
+    actual_token = token or settings.NOTION_TOKEN
     return {
-        "Authorization": f"Bearer {settings.NOTION_TOKEN}",
+        "Authorization": f"Bearer {actual_token}",
         "Content-Type": "application/json",
         "Notion-Version": NOTION_VERSION
     }
@@ -19,13 +20,16 @@ def _chunk_string(s: str, max_len: int = 1900) -> List[str]:
     if not s: return [""]
     return [s[i:i+max_len] for i in range(0, len(s), max_len)]
 
-async def create_notion_page(startup_name: str, session_id: str) -> Optional[str]:
-    if not settings.NOTION_TOKEN or not settings.NOTION_DATABASE_ID:
+async def create_notion_page(startup_name: str, session_id: str, token: Optional[str] = None, db_id: Optional[str] = None) -> Optional[str]:
+    actual_token = token or settings.NOTION_TOKEN
+    actual_db_id = db_id or settings.NOTION_DATABASE_ID
+    if not actual_token or not actual_db_id:
+        logger.warning("Notion token or database ID not set.")
         return None
 
     url = "https://api.notion.com/v1/pages"
     payload = {
-        "parent": {"database_id": settings.NOTION_DATABASE_ID},
+        "parent": {"database_id": actual_db_id},
         "properties": {
             "Name": {
                 "title": [
@@ -36,7 +40,7 @@ async def create_notion_page(startup_name: str, session_id: str) -> Optional[str
     }
 
     try:
-        response = await NOTION_CLIENT.post(url, headers=get_headers(), json=payload)
+        response = await NOTION_CLIENT.post(url, headers=get_headers(actual_token), json=payload)
         if response.status_code == 200:
             return response.json().get("id")
         logger.error(f"Notion page creation failed: {response.text}")
@@ -45,15 +49,16 @@ async def create_notion_page(startup_name: str, session_id: str) -> Optional[str
         logger.exception(f"Error creating Notion page: {e}")
         return None
 
-async def append_notion_blocks(page_id: str, blocks: List[Dict[str, Any]]) -> bool:
-    if not settings.NOTION_TOKEN: return False
+async def append_notion_blocks(page_id: str, blocks: List[Dict[str, Any]], token: Optional[str] = None, db_id: Optional[str] = None) -> bool:
+    actual_token = token or settings.NOTION_TOKEN
+    if not actual_token: return False
 
     url = f"https://api.notion.com/v1/blocks/{page_id}/children"
     chunk_size = 80
     for i in range(0, len(blocks), chunk_size):
         chunk = blocks[i:i + chunk_size]
         try:
-            response = await NOTION_CLIENT.patch(url, headers=get_headers(), json={"children": chunk})
+            response = await NOTION_CLIENT.patch(url, headers=get_headers(actual_token), json={"children": chunk})
             if response.status_code != 200:
                 logger.error(f"Notion append failed: {response.text}")
                 return False

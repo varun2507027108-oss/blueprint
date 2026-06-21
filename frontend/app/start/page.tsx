@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Activity, AlertTriangle, ArrowLeft } from "lucide-react";
 import { CustomThemeToggler } from "@/components/theme-toggler";
+import Sidebar from "@/components/Sidebar";
 
 type PollingMap = {
   status: string;
@@ -34,6 +35,8 @@ export default function StartPage() {
 
   const router = useRouter();
   const [mode, setMode] = useState<"form" | "polling" | "gate" | "failed">("form");
+
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [sessionId, setSessionId] = useState<string | null>(null);
   
   // Polling state
@@ -74,6 +77,16 @@ export default function StartPage() {
 
       const data = await res.json();
       setSessionId(data.session_id);
+
+      // Save to local storage history
+      try {
+        const mySessions = JSON.parse(localStorage.getItem("my_sessions") || "[]");
+        if (!mySessions.includes(data.session_id)) {
+          mySessions.push(data.session_id);
+          localStorage.setItem("my_sessions", JSON.stringify(mySessions));
+        }
+      } catch (e) {}
+
       setMode("polling");
     } catch (err: any) {
       setError(err.message);
@@ -133,8 +146,10 @@ export default function StartPage() {
   };
 
   return (
-    <div className="min-h-screen bg-base text-text-main font-mono relative selection:bg-[#E8A33D] selection:text-base">
-      <nav className="fixed top-0 left-0 right-0 z-50 px-6 h-16 flex items-center justify-between border-b border-border-subtle bg-base/80 backdrop-blur-md">
+    <div className="flex min-h-screen bg-base text-text-main font-mono relative selection:bg-[#E8A33D] selection:text-base">
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${sidebarOpen ? 'ml-72' : 'ml-0'}`}>
+        <nav className={`fixed top-0 right-0 z-50 px-6 h-16 flex items-center justify-between border-b border-border-subtle bg-base/80 backdrop-blur-md transition-all duration-300 ${sidebarOpen ? 'left-72' : 'left-0'}`}>
         <Link href="/#intent" className="flex items-center gap-2 font-bold text-[13px] tracking-widest uppercase hover:text-[#E8A33D] transition-colors">
           <ArrowLeft className="w-4 h-4" />
           BLUEPRINT
@@ -159,48 +174,48 @@ export default function StartPage() {
               >
                 <div className="mb-10">
                   <h1 className="text-2xl font-bold uppercase tracking-widest mb-2">Initialize Workspace</h1>
-                  <p className="text-[11px] text-text-muted uppercase tracking-widest">Connect your thesis to the execution engine.</p>
+                  <p className="text-xs text-text-muted uppercase tracking-widest">Connect your thesis to the execution engine.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                   <div className="group">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#E8A33D] mb-2">Company Name</label>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-[#E8A33D] mb-2">Company Name</label>
                     <input
                       name="startup_name"
                       required
-                      className="w-full bg-base border border-border-subtle p-4 text-[13px] text-text-main focus:outline-none focus:border-[#E8A33D] transition-colors"
+                      className="w-full bg-base border border-border-subtle p-4 text-sm text-text-main focus:outline-none focus:border-[#E8A33D] transition-colors"
                       placeholder="e.g. Blueprint Labs"
                     />
                   </div>
 
                   <div className="group">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#E8A33D] mb-2">Purpose of Orchestration</label>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-[#E8A33D] mb-2">Purpose of Orchestration</label>
                     <textarea
                       name="purpose"
                       required
                       rows={3}
-                      className="w-full bg-base border border-border-subtle p-4 text-[13px] text-text-main resize-none focus:outline-none focus:border-[#E8A33D] transition-colors leading-relaxed"
+                      className="w-full bg-base border border-border-subtle p-4 text-sm text-text-main resize-none focus:outline-none focus:border-[#E8A33D] transition-colors leading-relaxed"
                       placeholder="Why does this exist? What problem does it solve?"
                     />
                   </div>
 
                   <div className="group">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-[#E8A33D] mb-2">What Are We Building?</label>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-[#E8A33D] mb-2">What Are We Building?</label>
                     <textarea
                       name="building"
                       required
                       rows={4}
-                      className="w-full bg-base border border-border-subtle p-4 text-[13px] text-text-main resize-none focus:outline-none focus:border-[#E8A33D] transition-colors leading-relaxed"
+                      className="w-full bg-base border border-border-subtle p-4 text-sm text-text-main resize-none focus:outline-none focus:border-[#E8A33D] transition-colors leading-relaxed"
                       placeholder="Describe the software, features, and target users..."
                     />
                   </div>
 
                   <div className="group">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-text-muted mb-2">GitHub Repository (Optional)</label>
+                    <label className="block text-[11px] font-bold uppercase tracking-widest text-text-muted mb-2">GitHub Repository (Optional)</label>
                     <div className="flex bg-base border border-border-subtle focus-within:border-[#E8A33D] transition-colors">
                       <input
                         name="github_repo"
-                        className="w-full bg-transparent p-4 text-[13px] text-text-main focus:outline-none"
+                        className="w-full bg-transparent p-4 text-sm text-text-main focus:outline-none"
                         placeholder="e.g. owner/repo or full GitHub URL"
                       />
                     </div>
@@ -208,7 +223,7 @@ export default function StartPage() {
 
 
                   {error && (
-                    <div className="p-4 border border-status-failed bg-status-failed/10 text-status-failed text-[11px] uppercase tracking-widest">
+                    <div className="p-4 border border-status-failed bg-status-failed/10 text-status-failed text-xs uppercase tracking-widest">
                       {error}
                     </div>
                   )}
@@ -216,7 +231,7 @@ export default function StartPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-base border border-[#E8A33D] text-[#E8A33D] py-4 text-[11px] font-bold uppercase tracking-[0.15em] hover:bg-[#E8A33D] hover:text-base transition-colors relative"
+                    className="w-full bg-base border border-[#E8A33D] text-[#E8A33D] py-4 text-xs font-bold uppercase tracking-[0.15em] hover:bg-[#E8A33D] hover:text-base transition-colors relative"
                   >
                     {loading ? (
                       <span className="flex items-center justify-center gap-3">
@@ -243,7 +258,7 @@ export default function StartPage() {
                   <Activity className="w-12 h-12 text-[#E8A33D] relative z-10" />
                 </div>
                 <h2 className="text-xl font-bold uppercase tracking-widest mb-3">Agents Working</h2>
-                <p className="text-[11px] text-text-muted uppercase tracking-widest whitespace-pre-wrap">
+                <p className="text-xs text-text-muted uppercase tracking-widest whitespace-pre-wrap">
                   {pollData?.status 
                     ? `Current Status: ${pollData.status}` 
                     : "Establishing connection to orchestration layer..."}
@@ -273,25 +288,25 @@ export default function StartPage() {
 
                 <div className="space-y-6">
                   <div>
-                    <div className="text-[10px] uppercase tracking-widest text-[#E8A33D] font-bold mb-2">Verdict & Risk Score</div>
+                    <div className="text-[11px] uppercase tracking-widest text-[#E8A33D] font-bold mb-2">Verdict & Risk Score</div>
                     <div className="flex items-center gap-4">
-                      <span className="text-[13px]">{pollData.gate.result.verdict}</span>
-                      <span className="bg-base border border-border-subtle px-3 py-1 text-[11px] font-bold">{(pollData.gate.result.risk_score * 100).toFixed(0)}% RISK</span>
+                      <span className="text-sm">{pollData.gate.result.verdict}</span>
+                      <span className="bg-base border border-border-subtle px-3 py-1 text-xs font-bold">{(pollData.gate.result.risk_score * 100).toFixed(0)}% RISK</span>
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-[10px] uppercase tracking-widest text-text-muted font-bold mb-2">Reasoning</div>
-                    <div className="text-[13px] leading-relaxed text-text-main bg-base p-4 border border-border-subtle">
+                    <div className="text-[11px] uppercase tracking-widest text-text-muted font-bold mb-2">Reasoning</div>
+                    <div className="text-sm leading-relaxed text-text-main bg-base p-4 border border-border-subtle">
                       {pollData.gate.result.reasoning}
                     </div>
                   </div>
 
                   <div>
-                    <div className="text-[10px] uppercase tracking-widest text-status-failed font-bold mb-2">Identified Red Flags</div>
+                    <div className="text-[11px] uppercase tracking-widest text-status-failed font-bold mb-2">Identified Red Flags</div>
                     <ul className="space-y-2">
                       {pollData.gate.result.red_flags.map((flag, idx) => (
-                        <li key={idx} className="text-[12px] flex items-start gap-2 bg-status-failed/5 p-3 border border-status-failed/20 text-status-failed">
+                        <li key={idx} className="text-xs flex items-start gap-2 bg-status-failed/5 p-3 border border-status-failed/20 text-status-failed">
                           <span className="shrink-0 mt-0.5">•</span>
                           <span>{flag}</span>
                         </li>
@@ -307,7 +322,7 @@ export default function StartPage() {
                           rows={4}
                           value={revisedIdea}
                           onChange={e => setRevisedIdea(e.target.value)}
-                          className="w-full bg-base border border-border-subtle p-4 text-[13px] text-text-main resize-none focus:outline-none focus:border-[#E8A33D] transition-colors leading-relaxed"
+                          className="w-full bg-base border border-border-subtle p-4 text-sm text-text-main resize-none focus:outline-none focus:border-[#E8A33D] transition-colors leading-relaxed"
                           placeholder="Revise your thesis..."
                         />
                         <div className="flex flex-col sm:flex-row gap-4">
@@ -325,13 +340,13 @@ export default function StartPage() {
                               } catch (err) { console.error(err); }
                             }}
                             disabled={!revisedIdea.trim()}
-                            className="flex-1 bg-[#E8A33D] text-base py-3 text-[11px] font-bold uppercase tracking-widest hover:bg-[#E8A33D]/90 transition-colors disabled:opacity-50"
+                            className="flex-1 bg-[#E8A33D] text-base py-3 text-xs font-bold uppercase tracking-widest hover:bg-[#E8A33D]/90 transition-colors disabled:opacity-50"
                           >
                             Submit Revision
                           </button>
                           <button 
                             onClick={() => setIsRevising(false)}
-                            className="flex-1 bg-base text-text-main border border-border-subtle py-3 text-[11px] font-bold uppercase tracking-widest hover:border-[#E8A33D] transition-colors"
+                            className="flex-1 bg-base text-text-main border border-border-subtle py-3 text-xs font-bold uppercase tracking-widest hover:border-[#E8A33D] transition-colors"
                           >
                             Cancel
                           </button>
@@ -341,13 +356,13 @@ export default function StartPage() {
                       <div className="flex flex-col sm:flex-row gap-4">
                         <button 
                           onClick={() => handleGateAction("continue")}
-                          className="flex-1 bg-[#E8A33D] text-base py-3 text-[11px] font-bold uppercase tracking-widest hover:bg-[#E8A33D]/90 transition-colors"
+                          className="flex-1 bg-[#E8A33D] text-base py-3 text-xs font-bold uppercase tracking-widest hover:bg-[#E8A33D]/90 transition-colors"
                         >
                           Acknowledge & Continue
                         </button>
                         <button 
                           onClick={() => setIsRevising(true)}
-                          className="flex-1 bg-base border border-border-subtle py-3 text-[11px] font-bold uppercase tracking-widest hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
+                          className="flex-1 bg-base border border-border-subtle py-3 text-xs font-bold uppercase tracking-widest hover:border-[#E8A33D] hover:text-[#E8A33D] transition-colors"
                         >
                           Revise Idea
                         </button>
@@ -366,10 +381,10 @@ export default function StartPage() {
                 className="bg-panel border border-status-failed p-12 text-center"
               >
                 <div className="text-status-failed mb-6 font-bold uppercase tracking-widest">Orchestration Failed</div>
-                <p className="text-text-muted text-[13px] mb-8">The pipeline encountered a critical error during initialization.</p>
+                <p className="text-text-muted text-sm mb-8">The pipeline encountered a critical error during initialization.</p>
                 <button 
                   onClick={() => setMode("form")}
-                  className="bg-base border border-border-subtle px-8 py-3 text-[11px] font-bold uppercase tracking-widest hover:text-text-main transition-colors"
+                  className="bg-base border border-border-subtle px-8 py-3 text-xs font-bold uppercase tracking-widest hover:text-text-main transition-colors"
                 >
                   Retry Initialization
                 </button>
@@ -379,6 +394,7 @@ export default function StartPage() {
           </AnimatePresence>
         </div>
       </main>
+      </div>
     </div>
   );
 }

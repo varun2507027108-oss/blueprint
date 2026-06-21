@@ -1,6 +1,6 @@
 # models.py
 from pydantic import BaseModel, Field
-from typing import List, Dict, Any, Optional, Annotated
+from typing import List, Dict, Any, Optional, Annotated, Union
 
 # --- Reducers for parallel state merging ---
 
@@ -41,10 +41,31 @@ class GitHubIssue(BaseModel):
     title: str
     body: Optional[str] = ""
     labels: List[str] = []
+    story_points: Optional[int] = 3  # New
 
 class Sprint(BaseModel):
     name: str
     issue_titles: List[str] = []
+
+# New: SWOT Analysis
+class SWOTAnalysis(BaseModel):
+    strengths: List[str] = []
+    weaknesses: List[str] = []
+    opportunities: List[str] = []
+    threats: List[str] = []
+
+# New: Pricing Tier
+class PricingTier(BaseModel):
+    model: str  # e.g., "Basic", "Premium"
+    price: Union[str, int, float]  # e.g., "Free", "$19.99/mo"
+    features: List[str] = []
+
+# New: Email Sequence Step
+class EmailStep(BaseModel):
+    goal: str
+    send_day: Union[str, int]
+    subject: str
+    body: str
 
 # --- Agent Output Models ---
 
@@ -59,6 +80,8 @@ class MarketResearchReport(BaseModel):
     competitors: List[Competitor]
     trends: List[str]
     sources: List[str]
+    swot: Optional[SWOTAnalysis] = None  # New
+    gaps: List[str] = []  # New
 
 class PRD(BaseModel):
     problem_statement: str
@@ -75,11 +98,18 @@ class ArchitectureSpec(BaseModel):
 class IssuesAndSprintPlan(BaseModel):
     issues: List[GitHubIssue] = []
     sprints: List[Sprint] = []
+    definition_of_done: List[str] = []  # New
+    tech_debt_risks: List[str] = []  # New
+    team_size_recommended: Optional[Union[str, int]] = "2-3 engineers"  # New
 
 class MarketingAssets(BaseModel):
     landing_copy: str
     linkedin_post: str
     email_campaign: str
+    pricing_tiers: List[PricingTier] = []
+    email_sequence: List[EmailStep] = []
+    ninety_day_plan: List[str] = []  # New
+    launch_channels: List[Dict[str, str]] = []  # New (e.g., [{"channel": "Product Hunt", "tactic": "...", "reach": "..."}])
 
 # --- Graph State ---
 

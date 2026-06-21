@@ -1,14 +1,16 @@
 "use client";
 
 import { useMemo } from "react";
-import ReactFlow, { Background, Controls } from "reactflow";
+import ReactFlow, { Background, Controls, Handle, Position } from "reactflow";
 import dagre from "dagre";
 import "reactflow/dist/style.css";
 
 // Custom Node Component for Database Tables
 function TableNode({ data }: { data: any }) {
   return (
-    <div className="bg-[#111827] border border-[#334155] rounded-md shadow-xl w-56 overflow-hidden font-mono">
+    <div className="bg-[#111827] border border-[#334155] rounded-md shadow-xl w-56 overflow-hidden font-mono relative">
+      <Handle type="target" position={Position.Left} id="a-target" className="!bg-[#3b82f6] !border-none !w-2 !h-2" />
+      <Handle type="source" position={Position.Right} id="a-source" className="!bg-[#3b82f6] !border-none !w-2 !h-2" />
       <div className="bg-[#1e293b] text-white p-2 text-[11px] uppercase tracking-widest border-b border-[#334155] font-bold flex justify-between items-center cursor-move">
         <span>{data.tableName}</span>
         <span className="text-[8px] text-[#64748b]">TABLE</span>
@@ -21,10 +23,11 @@ function TableNode({ data }: { data: any }) {
               <span className="text-[#e2e8f0]">{attr.name}</span>
             </div>
             {attr.key && (
-              <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider ${attr.key === 'PK' ? 'bg-amber-500/20 text-amber-400' :
-                attr.key === 'FK' ? 'bg-blue-500/20 text-blue-400' :
-                  'bg-purple-500/20 text-purple-400' // For UNIQUE or other constraints
-                }`}>
+              <span className={`text-[8px] px-1.5 py-0.5 rounded-sm font-bold tracking-wider ${
+                attr.key.includes('PK') ? 'bg-amber-500/20 text-amber-400' : 
+                attr.key.includes('FK') ? 'bg-blue-500/20 text-blue-400' : 
+                'bg-purple-500/20 text-purple-400' // For UNIQUE or other constraints
+              }`}>
                 {attr.key}
               </span>
             )}
@@ -44,7 +47,6 @@ const getLayoutedElements = (nodes: any[], edges: any[]) => {
   dagreGraph.setGraph({ rankdir: "LR", nodesep: 50, ranksep: 80 }); // Left-to-right layout
 
   nodes.forEach((node) => {
-    // Estimate width/height for dagre. Width is 224px (w-56). Height depends on rows.
     const height = 40 + (node.data.attributes.length * 28);
     dagreGraph.setNode(node.id, { width: 224, height: height });
   });
@@ -58,7 +60,7 @@ const getLayoutedElements = (nodes: any[], edges: any[]) => {
   nodes.forEach((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
     node.position = {
-      x: nodeWithPosition.x - 112, // width / 2
+      x: nodeWithPosition.x - 112,
       y: nodeWithPosition.y - (nodeWithPosition.height / 2),
     };
   });
@@ -89,7 +91,7 @@ export default function ReactFlowERD({ chart }: { chart: string }) {
         fitView
         fitViewOptions={{ padding: 0.2 }}
         nodesConnectable={false}
-        nodesDraggable={true} // Tables are now draggable!
+        nodesDraggable={true}
         zoomOnScroll={true}
         panOnDrag={true}
       >
@@ -100,17 +102,17 @@ export default function ReactFlowERD({ chart }: { chart: string }) {
   );
 }
 
-// Parser: Converts AI Mermaid text into React Flow JSON
+// Upgraded Parser: Converts AI Mermaid text into React Flow JSON
 function parseMermaidToReactFlow(mermaidStr: string) {
   const nodes: any[] = [];
   const edges: any[] = [];
-
+  
   if (!mermaidStr) return { nodes, edges };
 
   let cleanStr = mermaidStr.replace(/```mermaid/g, '').replace(/```/g, '').trim();
   cleanStr = cleanStr.replace(/\berDiagram\b/gi, '').trim();
 
-  // 1. Parse Entities (e.g., USERS { UUID id PK VARCHAR(255) email UNIQUE })
+  // 1. Parse Entities
   const entityRegex = /(\w+)\s*\{([^}]*)\}/g;
   let match;
   while ((match = entityRegex.exec(cleanStr)) !== null) {
@@ -118,16 +120,21 @@ function parseMermaidToReactFlow(mermaidStr: string) {
     const attrsStr = match[2];
     const attributes: any[] = [];
 
-    // Regex updated to handle types with parentheses like VARCHAR(255)
-    // Matches: TYPE NAME KEY (e.g., VARCHAR(255) email UNIQUE)
-    const attrRegex = /(\w+(?:\(\d+\))?)\s+(\w+)(?:\s+(PK|FK|UNIQUE|NOT_NULL))?/g;
-    let attrMatch;
-    while ((attrMatch = attrRegex.exec(attrsStr)) !== null) {
-      attributes.push({
-        type: attrMatch[1],
-        name: attrMatch[2],
-        key: attrMatch[3] || null
-      });
+    // Split attributes by line for robust parsing
+    const attrLines = attrsStr.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+    
+    for (const line of attrLines) {
+      // Match: TYPE NAME (CONSTRAINTS)
+      // e.g., VARCHAR(255) email UNIQUE
+      // e.g., UUID id PK, FK
+      const attrMatch = line.match(/^([\w\d\(\),]+)\s+([\w\d_]+)(?:\s+(.+))?$/);
+      if (attrMatch) {
+        attributes.push({
+          type: attrMatch[1],
+          name: attrMatch[2],
+          key: attrMatch[3] ? attrMatch[3].trim() : null
+        });
+      }
     }
 
     nodes.push({
@@ -138,18 +145,27 @@ function parseMermaidToReactFlow(mermaidStr: string) {
     });
   }
 
-  // 2. Parse Relationships (e.g., USERS ||--o{ SESSIONS : has)
-  const relRegex = /(\w+)\s+\|[\|o]+--[\|o]+\s+(\w+)\s*:\s*([\w\s]+)/g;
+  // 2. Parse Relationships (Upgraded Regex)
+  // Matches: ENTITY_A ||--o{ ENTITY_B : "label"
+  // Matches: ENTITY_A }|--|| ENTITY_B : label
+  const relRegex = /(\w+)\s+([|o{}~-]+)\s+(\w+)\s*:\s*("[^"]+"|\w[\w\s-]*)/g;
   let relMatch;
   while ((relMatch = relRegex.exec(cleanStr)) !== null) {
     const source = relMatch[1];
-    const target = relMatch[2];
-    const label = relMatch[3].trim();
+    const target = relMatch[3];
+    let label = relMatch[4].trim();
+    
+    // Remove quotes from label if present
+    if (label.startsWith('"') && label.endsWith('"')) {
+      label = label.substring(1, label.length - 1);
+    }
 
     edges.push({
       id: `e-${source}-${target}-${Math.random().toString(36).substring(7)}`,
       source,
       target,
+      sourceHandle: "a-source",
+      targetHandle: "a-target",
       label,
       type: 'smoothstep',
       animated: true,

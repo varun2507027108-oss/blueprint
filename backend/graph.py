@@ -270,30 +270,49 @@ async def market_research_node(state: GraphState) -> Dict[str, Any]:
         sources = ["https://tavily.com/fallback"]
         
     system_instruction = (
-        "You are a Senior Market Research Analyst. Synthesize the provided search results into an actionable market report. "
-        "Estimate the TAM (Total Addressable Market) realistically using a bottom-up or top-down approach (1 sentence). "
-        "List exactly 3-4 key competitors, explicitly stating their core weakness or your differentiation. "
+        "You are a Senior Market Research Analyst. Synthesize the provided search results into an actionable, data-driven market report. "
+        "Estimate the TAM (Total Addressable Market) realistically. If search results provide specific numbers, CAGR, or sources, USE THEM EXACTLY (e.g., '$10.06B by 2029, CAGR 7.96% [source]'). "
+        "List exactly 3-4 key competitors, explicitly stating their core weakness. "
         "Identify 3 macro industry trends driving this market right now. "
+        "Identify 2-3 market gaps that this startup could exploit. "
+        "Provide a SWOT Analysis for this startup (2-3 points each for Strengths, Weaknesses, Opportunities, Threats). "
         "You must output a valid JSON object with these exact keys: "
         '"tam_estimate" (string), "competitors" (array of objects with name, description, url), '
-        '"trends" (array of strings), "sources" (array of strings).'
+        '"trends" (array of strings), "sources" (array of strings), '
+        '"swot" (object with arrays of strings: strengths, weaknesses, opportunities, threats), '
+        '"gaps" (array of strings).'
     )
     prompt = f"Startup Idea: '{idea_val}'\n\nSearch Results:\n{search_results_str}"
     
     try:
         api_key = settings.GROQ_API_KEY
         if not api_key:
-            report = MarketResearchReport(
-                tam_estimate="$500M",
-                competitors=[{"name": "Competitor X", "description": "Market incumbent (Mocked)", "url": "https://competitor.com"}],
-                trends=["Rising adoption of automation (Mocked)"],
-                sources=sources
-            )
-            report_dict = report.model_dump()
+            report_dict = {
+                "tam_estimate": "$500M",
+                "competitors": [{"name": "Competitor X", "description": "Market incumbent (Mocked)", "url": "https://competitor.com"}],
+                "trends": ["Rising adoption of automation (Mocked)"],
+                "sources": sources,
+                "swot": {
+                    "strengths": ["Agile engineering"],
+                    "weaknesses": ["Low initial funding"],
+                    "opportunities": ["AI market expansion"],
+                    "threats": ["Big tech competitors"]
+                },
+                "gaps": ["Personalized client management"]
+            }
         else:
             report_dict = await query_groq(system_instruction, prompt, MarketResearchReport, api_key=api_key, model="llama-3.3-70b-versatile")
             if not report_dict.get("sources"):
                 report_dict["sources"] = sources
+            if not report_dict.get("swot"):
+                report_dict["swot"] = {
+                    "strengths": [],
+                    "weaknesses": [],
+                    "opportunities": [],
+                    "threats": []
+                }
+            if not isinstance(report_dict.get("gaps"), list):
+                report_dict["gaps"] = []
             report = MarketResearchReport(**report_dict)
             
         version = await asyncio.to_thread(save_artifact, state.session_id, "market_research", report_dict)
@@ -425,19 +444,29 @@ async def engineering_manager_node(state: GraphState) -> Dict[str, Any]:
         })
         
         system_instruction = (
-            "You are a Senior Engineering Manager. Create a concise sprint plan. "
-            "Create exactly 3 GitHub issues. Keep the body under 20 words. "
+            "You are a Senior Engineering Manager. Create a comprehensive sprint plan. "
+            "Create exactly 4 sprints. Create exactly 4-5 GitHub issues per sprint (total ~16-20 issues). "
+            "Each issue must have a title, body, labels (backend, frontend, infra, design), and story_points (1, 2, 3, 5, or 8). "
+            "Provide a 'definition_of_done' array with 3 strict criteria. "
+            "Provide a 'tech_debt_risks' array with 2-3 specific risks. "
+            "Provide a 'team_size_recommended' string (e.g., '3 engineers'). "
             "You must output a valid JSON object with these exact keys: "
-            '"issues" (array of objects with title, body, labels), '
-            '"sprints" (array of objects with name, issue_titles).'
+            '"issues" (array of objects with title, body, labels, story_points), '
+            '"sprints" (array of objects with name, issue_titles), '
+            '"definition_of_done" (array of strings), '
+            '"tech_debt_risks" (array of strings), '
+            '"team_size_recommended" (string).'
         )
         prompt = f"Architecture Specification:\n{spec_str}"
         
         api_key = settings.GROQ_API_KEY
         if not api_key:
             plan_dict = {
-                "issues": [{"title": "Setup SQLite Schema", "body": "Create schemas.", "labels": ["db", "setup"]}],
-                "sprints": [{"name": "Sprint 1", "issue_titles": ["Setup SQLite Schema"]}]
+                "issues": [{"title": "Setup SQLite Schema", "body": "Create schemas.", "labels": ["db", "setup"], "story_points": 3}],
+                "sprints": [{"name": "Sprint 1", "issue_titles": ["Setup SQLite Schema"]}],
+                "definition_of_done": ["Code compiles", "Tests pass", "Approved by team"],
+                "tech_debt_risks": ["Potential DB lockups"],
+                "team_size_recommended": "2-3 engineers"
             }
         else:
             # CRITICAL FIX: Short timeout and 1 retry to fail fast and prevent UI lockups
@@ -454,6 +483,9 @@ async def engineering_manager_node(state: GraphState) -> Dict[str, Any]:
             # Safe parse. Force the keys to exist so Pydantic never crashes.
             if not isinstance(raw_dict.get("issues"), list): raw_dict["issues"] = []
             if not isinstance(raw_dict.get("sprints"), list): raw_dict["sprints"] = []
+            if not isinstance(raw_dict.get("definition_of_done"), list): raw_dict["definition_of_done"] = []
+            if not isinstance(raw_dict.get("tech_debt_risks"), list): raw_dict["tech_debt_risks"] = []
+            if not raw_dict.get("team_size_recommended"): raw_dict["team_size_recommended"] = "2-3 engineers"
                 
             plan_dict = raw_dict
             
@@ -493,29 +525,42 @@ async def marketing_node(state: GraphState) -> Dict[str, Any]:
     prd_str = safe_serialize(prd) if prd else "No PRD available."
     
     system_instruction = (
-        "You are a world-class Creative Director and Direct-Response Copywriter. "
-        "Your goal is to write emotionally resonant, high-converting launch assets that make people stop scrolling. "
-        "Write landing_copy: Use the AIDA framework. Start with a bold, provocative headline (USE ALL CAPS FOR THE HEADLINE). Follow with a subheadline that agitates a pain point. Provide 3 benefit-driven bullet points (use dashes '- '). End with a strong call-to-action. "
-        "CRITICAL: Do NOT use HTML tags (like <h1>, <ul>, <button>). Use plain text only with line breaks for formatting. "
-        "Write linkedin_post: Tell a short, engaging story about why this startup exists. Be slightly vulnerable and professional. Use line breaks for readability. End with a question to drive engagement. "
-        "Write email_campaign: Write a short, urgency-driven email to a waitlist. Start with a curiosity-inducing subject line (e.g., 'Subject: ...'). Keep the body under 100 words. "
+        "You are a world-class Creative Director and Growth Lead. Generate a comprehensive Go-To-Market strategy. "
+        "Write landing_copy: A bold headline, subheadline, 3 value props, and a CTA. Do NOT use HTML tags. "
+        "Write linkedin_post: A professional announcement post. "
+        "Write email_campaign: A short, urgency-driven email. "
+        "Develop a 5-step Email Drip Campaign sequence (Goal, Send Day [Day 0, Day 3, Day 7, Day 14, Day 30], Subject, Body). "
+        "Define a Freemium Pricing Model with 2 tiers (Basic and Premium) including price and features. "
+        "Provide a 'ninety_day_plan' array with 3 phases (Month 1, Month 2, Month 3) detailing launch and growth tactics. "
+        "Provide 'launch_channels' array with 2-3 objects (e.g., Product Hunt, Instagram) including 'channel', 'tactic', and 'expected_reach'. "
         "You must output a valid JSON object with these exact keys: "
-        '"landing_copy" (string), "linkedin_post" (string), "email_campaign" (string). '
-        "Do not nest these inside other objects; they must be plain strings at the top level."
+        '"landing_copy" (string), "linkedin_post" (string), "email_campaign" (string), '
+        '"pricing_tiers" (array of objects with model, price, features), '
+        '"email_sequence" (array of objects with goal, send_day, subject, body), '
+        '"ninety_day_plan" (array of strings), '
+        '"launch_channels" (array of objects with channel, tactic, expected_reach). '
+        "Do not nest these inside other objects; top-level keys only."
     )
     prompt = f"Startup Idea: '{idea_val}'\n\nProduct Requirement Document (PRD):\n{prd_str}"
     
     try:
         api_key = settings.GROQ_API_KEY
         if not api_key:
-            assets = MarketingAssets(
-                landing_copy="AI Founder OS: Automate your product validation.",
-                linkedin_post="Accelerating startup workflows with AI Founder OS!",
-                email_campaign="Introducing automated pipeline for startup validation."
-            )
-            assets_dict = assets.model_dump()
+            assets_dict = {
+                "landing_copy": "AI Founder OS: Automate your product validation.",
+                "linkedin_post": "Accelerating startup workflows with AI Founder OS!",
+                "email_campaign": "Introducing automated pipeline for startup validation.",
+                "pricing_tiers": [{"model": "Basic", "price": "Free", "features": ["1 user", "Basic docs"]}],
+                "email_sequence": [{"goal": "Onboarding", "send_day": "Day 0", "subject": "Welcome!", "body": "Welcome aboard."}],
+                "ninety_day_plan": ["Month 1: Design logo", "Month 2: Launch beta", "Month 3: Scale marketing"],
+                "launch_channels": [{"channel": "Product Hunt", "tactic": "Post daily updates", "expected_reach": "1000 users"}]
+            }
         else:
             assets_dict = await query_groq_creative(system_instruction, prompt, MarketingAssets, api_key=api_key, model="llama-3.3-70b-versatile")
+            if not isinstance(assets_dict.get("pricing_tiers"), list): assets_dict["pricing_tiers"] = []
+            if not isinstance(assets_dict.get("email_sequence"), list): assets_dict["email_sequence"] = []
+            if not isinstance(assets_dict.get("ninety_day_plan"), list): assets_dict["ninety_day_plan"] = []
+            if not isinstance(assets_dict.get("launch_channels"), list): assets_dict["launch_channels"] = []
             assets = MarketingAssets(**assets_dict)
             
         version = await asyncio.to_thread(save_artifact, state.session_id, "marketing", assets_dict)
@@ -528,9 +573,18 @@ async def marketing_node(state: GraphState) -> Dict[str, Any]:
         return {"stages": {"marketing": {"status": "failed", "version": 0}}, "failed_stages": failed_stages}
 
 async def join_node(state: GraphState) -> Dict[str, Any]:
-    if state.failed_stages:
-        return {"status": "failed"}
-    return {"status": "complete"}
+    stages_dict = state.stages or {}
+    all_stages = ["startup_advisor", "market_research", "product_manager", "architect", "engineering_manager", "marketing"]
+    
+    # Check if all stages are done (either complete or failed)
+    all_done = all(stages_dict.get(s, {}).get("status") in ["complete", "failed"] for s in all_stages)
+    
+    if all_done:
+        if state.failed_stages or any(stages_dict.get(s, {}).get("status") == "failed" for s in all_stages):
+            return {"status": "failed"}
+        return {"status": "complete"}
+        
+    return {"status": "running"}
 
 # --- Conditional Routing ---
 

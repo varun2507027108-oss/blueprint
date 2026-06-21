@@ -6,7 +6,6 @@ from typing import Dict, Any
 
 import httpx
 from main import app
-from db import init_db
 
 async def poll_session_status(client: httpx.AsyncClient, session_id: str, expected_statuses: list[str], max_attempts: int = 200) -> Dict[str, Any]:
     for attempt in range(max_attempts):
@@ -41,7 +40,6 @@ async def run_tests():
         except Exception as e:
             print(f"Error cleaning {f}: {e}")
 
-    init_db()
 
     # Using app.router.lifespan_context and AsyncClient in a single block to manage lifespan and requests
     transport = httpx.ASGITransport(app=app)
@@ -138,12 +136,22 @@ async def run_tests():
 
         # 4b. Test Notion Export
         print("\n--- 4b. Testing Notion Export ---")
-        notion_payload = {
-            "target": "notion"
-        }
-        notion_response = await client.post(f"/sessions/{session_id}/export", json=notion_payload)
-        assert notion_response.status_code == 502, f"Expected 502 Bad Gateway for missing Notion keys. Response: {notion_response.status_code} - {notion_response.text}"
-        print("Notion export rejected with 502 Bad Gateway as expected!")
+        from config import settings as test_settings
+        orig_token = test_settings.NOTION_TOKEN
+        orig_db_id = test_settings.NOTION_DATABASE_ID
+        try:
+            test_settings.NOTION_TOKEN = ""
+            test_settings.NOTION_DATABASE_ID = ""
+            notion_payload = {
+                "target": "notion"
+            }
+            notion_response = await client.post(f"/sessions/{session_id}/export", json=notion_payload)
+            assert notion_response.status_code == 502, f"Expected 502 Bad Gateway for missing Notion keys. Response: {notion_response.status_code} - {notion_response.text}"
+            print("Notion export rejected with 502 Bad Gateway as expected!")
+        finally:
+            test_settings.NOTION_TOKEN = orig_token
+            test_settings.NOTION_DATABASE_ID = orig_db_id
+
 
         # 5. Test Gate Interrupt Flow (Idea that triggers warning & pause)
         print("\n--- 5. Testing Gate Interrupt Flow ---")
