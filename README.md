@@ -23,7 +23,7 @@
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-10B981?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![LangGraph](https://img.shields.io/badge/Orchestration-LangGraph-34D399?style=for-the-badge&logo=python&logoColor=white)](https://langchain-ai.github.io/langgraph/)
 [![Groq](https://img.shields.io/badge/LLM-Groq-F59E0B?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiLz48L3N2Zz4=&logoColor=black)](https://groq.com/)
-[![SQLite](https://img.shields.io/badge/Database-SQLite-047857?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org/)
+[![Supabase](https://img.shields.io/badge/Database-Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 [![TypeScript](https://img.shields.io/badge/Language-TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Language-Python%203.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
 
@@ -70,7 +70,7 @@ Blueprint is a **production-grade, multi-agent AI pipeline** that transforms a r
 
 ## 🗺️ System Architecture
 
-> The workflow is managed as a **stateful LangGraph DAG**, executing agents through a parallel-branching pipeline and persisting all intermediate artifacts to a local SQLite database.
+> The workflow is managed as a **stateful LangGraph DAG**, executing agents through a parallel-branching pipeline and  persisting all intermediate artifacts to a Supabase database.
 
 ```mermaid
 graph TD
@@ -94,7 +94,7 @@ graph TD
     Marketing --> Join
 
     Join --> PDF["📄 PDF Compiler\nxhtml2pdf"]
-    Join --> DB[("💾 SQLite\nPersist Session")]
+    Join --> DB[("💾 Supabase\nPersist Session")]
     Join --> GitHub["🐙 GitHub Issues\nAuto-Sync"]
     Join --> Notion["📓 Notion\nOptional Sync"]
 
@@ -153,7 +153,7 @@ flowchart LR
         O1["GraphState\nFull Session Snapshot\n────────────────────\nAll artifacts merged"]
         O2["📄 PDF Report\nAll artifacts compiled"]
         O3["🐙 GitHub Issues\nAuto-created"]
-        O4["💾 SQLite Row\nPersisted"]
+        O4["💾 Supabase Row\nPersisted"]
     end
 
     INPUT --> ADVISOR
@@ -417,7 +417,7 @@ sequenceDiagram
 
     EM-->>Join: IssuesAndSprintPlan
     Join->>Out: Compile PDF Report (xhtml2pdf)
-    Join->>Out: Persist to SQLite
+    Join->>Out: Persist to Supabase
     Join->>Out: Optional: Notion sync
     Out-->>Founder: 🎉 Full Founder Package via SSE Stream
 ```
@@ -437,7 +437,7 @@ sequenceDiagram
 | **LLM — Product Manager** | Google Gemini 2.5 Flash | Long-context synthesis |
 | **LLM — System Architect** | NVIDIA NIM · nemotron-70b | Technical precision |
 | **Search Tool** | Tavily Search API | Real-time competitive intelligence |
-| **Database** | SQLite | Session persistence (demo-ready) |
+| **Database** | Supabase | Session & artifact persistence |
 | **PDF Export** | xhtml2pdf | Compiled founder report |
 | **Integrations** | GitHub REST API | Auto-create issues |
 | **Integrations** | Notion API | Optional database sync |
@@ -454,7 +454,7 @@ AI-Orchestration-System/
 │   ├── main.py                 # FastAPI app server & REST endpoints
 │   ├── graph.py                # LangGraph DAG: nodes, edges, routing logic
 │   ├── models.py               # Pydantic schemas & GraphState definitions
-│   ├── db.py                   # SQLite persistence handlers
+│   ├── db.py                   # Supabase persistence handlers
 │   ├── config.py               # Environment variable loader
 │   ├── requirements.txt        # Python dependencies
 │   ├── test_api.py             # End-to-end integration tests
