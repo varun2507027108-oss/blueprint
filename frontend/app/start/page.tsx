@@ -148,8 +148,8 @@ export default function StartPage() {
   return (
     <div className="flex min-h-screen bg-base text-text-main font-mono relative selection:bg-[#E8A33D] selection:text-base">
       <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
-      <div className={`flex-1 min-w-0 transition-all duration-300 ${sidebarOpen ? 'ml-72' : 'ml-0'}`}>
-        <nav className={`fixed top-0 right-0 z-50 px-6 h-16 flex items-center justify-between border-b border-border-subtle bg-base/80 backdrop-blur-md transition-all duration-300 ${sidebarOpen ? 'left-72' : 'left-0'}`}>
+      <div className={`flex-1 min-w-0 transition-all duration-300 ${sidebarOpen ? 'ml-72' : 'ml-16'}`}>
+        <nav className={`fixed top-0 right-0 z-50 px-6 h-16 flex items-center justify-between border-b border-border-subtle bg-base/80 backdrop-blur-md transition-all duration-300 ${sidebarOpen ? 'left-72' : 'left-16'}`}>
         <Link href="/#intent" className="flex items-center gap-2 font-bold text-[13px] tracking-widest uppercase hover:text-[#E8A33D] transition-colors">
           <ArrowLeft className="w-4 h-4" />
           BLUEPRINT
