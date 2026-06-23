@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str = Field(default="")
     NOTION_TOKEN: str = Field(default="")
     NOTION_DATABASE_ID: str = Field(default="")
+    NOTION_CLIENT_ID: str = Field(default="")
+    NOTION_CLIENT_SECRET: str = Field(default="")
     
     # Supabase Configs
     SUPABASE_URL: str = Field(default="")

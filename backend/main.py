@@ -116,6 +116,71 @@ async def github_auth(code: str):
         except httpx.HTTPError as e:
             logger.error(f"GitHub OAuth HTTP error: {e}")
             raise HTTPException(status_code=400, detail="HTTP error during OAuth exchange")
+        except Exception as e:
+            logger.error(f"Unexpected error during GitHub OAuth: {e}")
+            raise HTTPException(status_code=500, detail="Unexpected server error")
+
+@app.get("/auth/notion")
+async def notion_auth(code: str, redirect_uri: str):
+    token_url = "https://api.notion.com/v1/oauth/token"
+    payload = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": redirect_uri,
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                token_url,
+                json=payload,
+                auth=(settings.NOTION_CLIENT_ID, settings.NOTION_CLIENT_SECRET)
+            )
+            if response.status_code == 200:
+                data = response.json()
+                access_token = data.get("access_token")
+                if access_token:
+                    return {"access_token": access_token}
+                logger.error(f"Notion OAuth error: {data}")
+                raise HTTPException(status_code=400, detail="Failed to retrieve access token from Notion response")
+            else:
+                logger.error(f"Notion OAuth failed with status {response.status_code}: {response.text}")
+                raise HTTPException(status_code=400, detail=f"Notion OAuth failed: {response.text}")
+        except httpx.HTTPError as e:
+            logger.error(f"Notion OAuth HTTP error: {e}")
+            raise HTTPException(status_code=400, detail="HTTP error during Notion OAuth exchange")
+
+@app.get("/notion/databases")
+async def notion_databases(token: str):
+    search_url = "https://api.notion.com/v1/search"
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Notion-Version": "2022-06-28"
+    }
+    payload = {
+        "filter": {
+            "value": "database",
+            "property": "object"
+        }
+    }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(search_url, json=payload, headers=headers)
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                databases = []
+                for item in results:
+                    db_id = item.get("id")
+                    title_list = item.get("title", [])
+                    title_text = "".join([t.get("plain_text", "") for t in title_list]) if title_list else "Untitled"
+                    databases.append({"id": db_id, "title": title_text})
+                return databases
+            else:
+                logger.error(f"Notion search failed with status {response.status_code}: {response.text}")
+                raise HTTPException(status_code=response.status_code, detail=f"Failed to fetch databases from Notion: {response.text}")
+        except httpx.HTTPError as e:
+            logger.error(f"Notion search HTTP error: {e}")
+            raise HTTPException(status_code=400, detail="HTTP error fetching databases from Notion")
 
 @app.post("/sessions")
 async def create_session(payload: CreateSessionRequest):

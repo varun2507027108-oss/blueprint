@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { BACKEND_URL, GITHUB_CLIENT_ID } from "@/lib/config";
+import { BACKEND_URL, GITHUB_CLIENT_ID, NOTION_CLIENT_ID } from "@/lib/config";
 import { Plus, Github, FileText } from "lucide-react";
 
 export default function Sidebar() {
@@ -14,6 +14,12 @@ export default function Sidebar() {
   const [isConnected, setIsConnected] = useState(false);
   const [githubConnected, setGithubConnected] = useState(false);
   const [recentSessions, setRecentSessions] = useState<any[]>([]);
+
+  // Notion OAuth dynamic state
+  const [databases, setDatabases] = useState<any[]>([]);
+  const [loadingDbs, setLoadingDbs] = useState(false);
+  const [notionDbError, setNotionDbError] = useState("");
+
   const pathname = usePathname();
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -21,10 +27,41 @@ export default function Sidebar() {
     // Load Notion creds
     const token = localStorage.getItem("notion_token");
     const dbId = localStorage.getItem("notion_database_id");
-    if (token && dbId) {
+    if (token) {
       setNotionToken(token);
-      setNotionDbId(dbId);
       setIsConnected(true);
+      if (dbId) {
+        setNotionDbId(dbId);
+      } else {
+        setNotionDbId("");
+      }
+
+      setLoadingDbs(true);
+      setNotionDbError("");
+      fetch(`${BACKEND_URL}/notion/databases?token=${token}`)
+        .then(res => {
+          if (!res.ok) throw new Error("Failed to fetch databases");
+          return res.json();
+        })
+        .then(data => {
+          if (Array.isArray(data)) {
+            setDatabases(data);
+          } else {
+            setNotionDbError("Invalid databases format");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          setNotionDbError("Failed to load databases");
+        })
+        .finally(() => {
+          setLoadingDbs(false);
+        });
+    } else {
+      setIsConnected(false);
+      setNotionToken("");
+      setNotionDbId("");
+      setDatabases([]);
     }
 
     // Load GitHub token
@@ -68,10 +105,27 @@ export default function Sidebar() {
     }, 200);
   };
 
-  const handleSaveNotion = () => {
-    localStorage.setItem("notion_token", notionToken);
-    localStorage.setItem("notion_database_id", notionDbId);
-    setIsConnected(true);
+  const handleConnectNotion = () => {
+    const redirectUri = window.location.origin + "/auth/notion/callback";
+    window.location.href = `https://api.notion.com/v1/oauth/authorize?client_id=${NOTION_CLIENT_ID}&response_type=code&owner=user&redirect_uri=${encodeURIComponent(redirectUri)}`;
+  };
+
+  const handleDisconnectNotion = () => {
+    localStorage.removeItem("notion_token");
+    localStorage.removeItem("notion_database_id");
+    setNotionToken("");
+    setNotionDbId("");
+    setIsConnected(false);
+    setDatabases([]);
+  };
+
+  const handleSelectDatabase = (dbId: string) => {
+    setNotionDbId(dbId);
+    if (dbId) {
+      localStorage.setItem("notion_database_id", dbId);
+    } else {
+      localStorage.removeItem("notion_database_id");
+    }
   };
 
   const handleConnectGithub = () => {
@@ -147,12 +201,13 @@ export default function Sidebar() {
 
           {/* Notion Icon Button */}
           <div className="relative">
-            <div
+            <button
+              onClick={isConnected ? handleDisconnectNotion : handleConnectNotion}
               className="flex items-center justify-center w-10 h-10 rounded-sm hover:bg-panel transition-colors text-[#3b82f6] dark:text-[#E8A33D]"
-              title={isConnected ? "Notion: Connected" : "Notion: Disconnected"}
+              title={isConnected ? "Disconnect Notion" : "Connect Notion"}
             >
               <FileText className="w-5 h-5" />
-            </div>
+            </button>
             {isConnected && (
               <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-status-complete rounded-full border-2 border-base animate-pulse"></span>
             )}
@@ -178,26 +233,60 @@ export default function Sidebar() {
                 <span className="text-[11px] text-text-main font-bold">Notion</span>
                 {isConnected && <span className="w-2 h-2 bg-status-complete rounded-full animate-pulse"></span>}
               </div>
-              <input 
-                type="password" 
-                placeholder="Integration Token" 
-                value={notionToken}
-                onChange={(e) => setNotionToken(e.target.value)}
-                className="w-full bg-base border border-border-subtle px-2 py-1 text-text-main text-[10px] focus:outline-none focus:border-accent rounded-sm"
-              />
-              <input 
-                type="text" 
-                placeholder="Database ID" 
-                value={notionDbId}
-                onChange={(e) => setNotionDbId(e.target.value)}
-                className="w-full bg-base border border-border-subtle px-2 py-1 text-text-main text-[10px] focus:outline-none focus:border-accent rounded-sm"
-              />
-              <button 
-                onClick={handleSaveNotion}
-                className="w-full bg-accent text-base py-1 text-[9px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity rounded-sm mt-1"
-              >
-                {isConnected ? "Update" : "Save"}
-              </button>
+              
+              {!isConnected ? (
+                <button 
+                  onClick={handleConnectNotion}
+                  className="w-full bg-accent text-base py-1 text-[9px] font-bold uppercase tracking-widest hover:opacity-90 transition-opacity rounded-sm"
+                >
+                  Connect Notion
+                </button>
+              ) : (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[9px] text-text-muted">
+                    <span>Connected</span>
+                    <button 
+                      onClick={handleDisconnectNotion}
+                      className="text-red-500 hover:text-red-400 font-bold uppercase tracking-wider text-[8px]"
+                    >
+                      Disconnect
+                    </button>
+                  </div>
+                  
+                  {loadingDbs ? (
+                    <div className="text-[10px] text-text-muted italic py-1 animate-pulse">
+                      Loading databases...
+                    </div>
+                  ) : notionDbError ? (
+                    <div className="text-[10px] text-red-500 py-1">
+                      {notionDbError}
+                    </div>
+                  ) : databases.length === 0 ? (
+                    <div className="text-[10px] text-text-muted italic py-1">
+                      No databases found.
+                    </div>
+                  ) : (
+                    <select
+                      value={notionDbId}
+                      onChange={(e) => handleSelectDatabase(e.target.value)}
+                      className="w-full bg-base border border-border-subtle px-2 py-1 text-text-main text-[10px] focus:outline-none focus:border-accent rounded-sm cursor-pointer"
+                    >
+                      <option value="">Select a database...</option>
+                      {databases.map((db) => (
+                        <option key={db.id} value={db.id}>
+                          {db.title}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  
+                  {!notionDbId && (
+                    <div className="text-[9px] text-amber-500 dark:text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/20 p-1.5 rounded-sm">
+                      Select a database to enable exports.
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2 bg-panel border border-border-subtle p-3 rounded-sm">
