@@ -359,11 +359,23 @@ async def get_session_decision_log(id: str):
 async def export_session(id: str, payload: ExportRequest):
     config = {"configurable": {"thread_id": id}}
     snapshot = await app.state.graph.aget_state(config)
-    
-    if not snapshot.values and id not in ACTIVE_SESSIONS:
-        raise HTTPException(status_code=404, detail="Session not found")
-
     state_values = snapshot.values
+    
+    if not state_values:
+        db_sessions = await asyncio.to_thread(get_sessions_by_ids, [id])
+        if db_sessions:
+            db_sess = db_sessions[0]
+            state_values = {
+                "startup_name": db_sess["startup_name"]
+            }
+        else:
+            details = ACTIVE_SESSIONS.get(id)
+            if not details:
+                raise HTTPException(status_code=404, detail="Session not found")
+            state_values = {
+                "startup_name": details["startup_name"]
+            }
+
     startup_name = state_values.get("startup_name", "Startup")
 
     stages_list = ["startup_advisor", "market_research", "product_manager", "architect", "engineering_manager", "marketing"]
