@@ -101,12 +101,12 @@ export default function Sidebar() {
       {/* Brand logo at the top */}
       <div className="flex items-center justify-center w-14 h-16 shrink-0 relative">
         <img 
-          src="/logo-dark.png" 
+          src="/logo-light.png" 
           alt="Logo" 
           className="w-11 h-11 object-contain transition-opacity duration-200 block dark:hidden" 
         />
         <img 
-          src="/logo-light.png" 
+          src="/logo-dark.png" 
           alt="Logo" 
           className="w-11 h-11 object-contain transition-opacity duration-200 hidden dark:block" 
         />
