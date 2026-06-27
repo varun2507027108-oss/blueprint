@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blueprint Engine | AI Founder Orchestration System</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    :root {
+      /* Theme variables: Dark Theme by default */
+      --bg: #05070A;
+      --panel: #11161C;
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #ECEAE3;
+      --text-muted: #8A8F99;
+      --accent: #E8A33D;
+      --accent-muted: rgba(232, 163, 61, 0.1);
+      
+      --complete: #3FB950;
+      --complete-muted: rgba(63, 185, 80, 0.1);
+      --failed: #E5484D;
+      --failed-muted: rgba(229, 72, 77, 0.1);
+      --pending: #6B7280;
+      
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-sans: 'Outfit', sans-serif;
+    }
+
+    .light-theme {
+      --bg: #ECEAE3;
+      --panel: #FAFAFA;
+      --border: rgba(0, 0, 0, 0.1);
+      --text: #0B0F14;
+      --text-muted: #6B7280;
+      --accent: #D78A22;
+      --accent-muted: rgba(215, 138, 34, 0.1);
+      
+      --complete: #2DA44E;
+      --complete-muted: rgba(45, 164, 78, 0.1);
+      --failed: #CF222E;
+      --failed-muted: rgba(207, 34, 46, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    code, pre {
+      font-family: var(--font-mono);
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* Container Utility */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* Header styling */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 70px;
+      background: rgba(var(--bg), 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-b: 1px solid var(--border);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header .nav-container {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.95rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    nav a {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    nav a:hover, nav a.active {
+      color: var(--accent);
+    }
+
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+      cursor: pointer;
+      width: 38px;
+      height: 38px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding-top: 100px;
+      overflow: hidden;
+    }
+
+    .hero-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-translate-x, -translate-y);
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--accent-muted) 0%, transparent 70%);
+      filter: blur(80px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+    }
+
+    .hero-tag {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.1;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero h1 span {
+      color: var(--accent);
+    }
+
+    .hero p {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      max-width: 600px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      text-decoration: none;
+      padding: 1.25rem 2.25rem;
+      border-radius: 4px;
+      transition: all 0.2s;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: var(--bg);
+      border: 1px solid var(--accent);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+
+    .btn-secondary {
+      background-color: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--border);
+      border-color: var(--text-muted);
+    }
+
+    /* Sections General */
+    section {
+      padding: 6rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-header {
+      margin-bottom: 4rem;
+    }
+
+    .section-header h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-header p {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    /* Grid Layout for Docs */
+    .docs-grid {
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 2.5rem;
+    }
+
+    @media (min-width: 992px) {
+      .docs-grid {
+        grid-template-cols: 250px 1fr;
+      }
+    }
+
+    /* Table of contents sidebar */
+    .docs-sidebar {
+      position: sticky;
+      top: 100px;
+      height: fit-content;
+    }
+
+    .docs-sidebar h3 {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .docs-sidebar ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .docs-sidebar a {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .docs-sidebar a:hover, .docs-sidebar a.active {
+      color: var(--accent);
+    }
+
+    .docs-sidebar a i {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Content Cards */
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--accent);
+      opacity: 0.8;
+    }
+
+    .card h3 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text);
+    }
+
+    .card h3 i {
+      color: var(--accent);
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.7;
+    }
+
+    /* Interactive Graph Visualizer */
+    .graph-visualizer {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 3rem;
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 992px) {
+      .graph-visualizer {
+        grid-template-cols: 1.2fr 0.8fr;
+      }
+    }
+
+    .canvas-container {
+      border: 1px solid var(--border);
+      background-color: var(--bg);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+      min-height: 480px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .graph-svg {
+      width: 100%;
+      height: 100%;
+      min-height: 480px;
+      user-select: none;
+    }
+
+    /* SVG Graph styling */
+    .node {
+      cursor: pointer;
+    }
+
+    .node circle {
+      fill: var(--panel);
+      stroke: var(--border);
+      stroke-width: 2px;
+      transition: all 0.2s;
+    }
+
+    .node:hover circle, .node.active circle {
+      stroke: var(--accent);
+      fill: var(--accent-muted);
+      filter: drop-shadow(0 0 8px var(--accent));
+    }
+
+    .node text {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: bold;
+      fill: var(--text);
+      text-anchor: middle;
+      pointer-events: none;
+    }
+
+    .node.gate circle {
+      stroke: var(--failed);
+    }
+    .node.gate:hover circle, .node.gate.active circle {
+      fill: var(--failed-muted);
+      stroke: var(--failed);
+      filter: drop-shadow(0 0 8px var(--failed));
+    }
+
+    .node.special circle {
+      stroke: var(--complete);
+    }
+    .node.special:hover circle, .node.special.active circle {
+      fill: var(--complete-muted);
+      stroke: var(--complete);
+      filter: drop-shadow(0 0 8px var(--complete));
+    }
+
+    .link {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 1.5px;
+      marker-end: url(#arrow);
+      transition: stroke 0.3s;
+    }
+
+    .link.active {
+      stroke: var(--accent);
+      stroke-width: 2px;
+    }
+
+    /* Detail Pane */
+    .detail-pane {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 1.5rem;
+      height: 100%;
+      overflow-y: auto;
+      max-height: 520px;
+    }
+
+    .detail-header {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+    }
+
+    .detail-subtitle {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .detail-section {
+      margin-bottom: 1.25rem;
+    }
+
+    .detail-section h4 {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .detail-section h4 i {
+      color: var(--accent);
+      font-size: 0.8rem;
+    }
+
+    .detail-section p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--border);
+      color: var(--text);
+      margin-right: 0.5rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .badge-accent {
+      background: var(--accent-muted);
+      color: var(--accent);
+      border: 1px solid rgba(232, 163, 61, 0.2);
+    }
+
+    /* Code block styling */
+    .schema-block {
+      background: #0B0F14;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1rem;
+      overflow-x: auto;
+      max-height: 250px;
+      font-size: 0.75rem;
+      color: #E2E8F0;
+      margin-top: 0.5rem;
+    }
+
+    .keyword { color: #F43F5E; }
+    .type { color: #06B6D4; }
+    .string { color: #10B981; }
+    .comment { color: #64748B; }
+
+    /* Interactive Directory Tree */
+    .file-explorer {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      display: grid;
+      grid-template-cols: 1fr;
+      min-height: 480px;
+    }
+
+    @media (min-width: 768px) {
+      .file-explorer {
+        grid-template-cols: 300px 1fr;
+      }
+    }
+
+    .tree-view {
+      border-right: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-y: auto;
+      max-height: 500px;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .tree-node {
+      margin-left: 1rem;
+      position: relative;
+    }
+
+    .tree-node-title {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 0.35rem 0.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 4px;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .tree-node-title:hover {
+      background-color: var(--border);
+      color: var(--text);
+    }
+
+    .tree-node.active > .tree-node-title {
+      background-color: var(--accent-muted);
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .tree-node-children {
+      display: none;
+    }
+
+    .tree-node.expanded > .tree-node-children {
+      display: block;
+    }
+
+    .file-view {
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      max-height: 500px;
+    }
+
+    .file-header {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .file-name {
+      font-family: var(--font-mono);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .file-path {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Tech Deep Dive Tabs */
+    .tab-container {
+      margin-top: 2rem;
+    }
+
+    .tab-headers {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+      gap: 1.5rem;
+      padding-bottom: 1px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 1rem 0.5rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 2.5rem 0;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid-2 {
+        grid-template-cols: 1fr 1fr;
+      }
+    }
+
+    .interactive-list {
+      list-style: none;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .interactive-list-item {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.25rem;
+      position: relative;
+    }
+
+    .interactive-list-item h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .interactive-list-item p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3rem 0;
+      background: var(--panel);
+      text-align: center;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Grid layout backgrounds for visual polish */
+    .grid-bg-overlay {
+      background-size: 24px 24px;
+      background-image: 
+        linear-gradient(to right, rgba(128, 128, 128, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
+    }
+  </style>
+</head>
+<body class="grid-bg-overlay">
+
+  <!-- Header -->
+  <header>
+    <div class="container nav-container">
+      <a href="#" class="logo">
+        <i data-lucide="layers" style="color: var(--accent);"></i>
+        BLUEPRINT <span>ENGINE</span>
+      </a>
+      <nav>
+        <a href="#hero" class="active">Overview</a>
+        <a href="#langgraph">Architecture</a>
+        <a href="#structure">Codebase</a>
+        <a href="#deepdive">Deep Dives</a>
+        <button class="theme-toggle" id="themeToggler" aria-label="Toggle Theme">
+          <i data-lucide="sun" id="themeIcon"></i>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="hero-glow"></div>
+    <div class="container hero-content">
+      <div class="hero-tag">
+        <i data-lucide="sparkles"></i> MULTI-AGENT ORCHESTRATION
+      </div>
+      <h1>Stateful AI<br>Startup <span>Orchestrator</span></h1>
+      <p>
+        Blueprint is a production-grade multi-agent workspace built on FastAPI, Next.js 15, and LangGraph. It takes a raw startup thesis and coordinates six specialized AI actors to assemble investor-ready reports, architectures, sprint backlogs, and landing copy in minutes.
+      </p>
+      <div class="btn-group">
+        <a href="#langgraph" class="btn btn-primary">
+          Explore Architecture <i data-lucide="arrow-right"></i>
+        </a>
+        <a href="#structure" class="btn btn-secondary">
+          Browse File Tree
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- LangGraph Node Visualizer Section -->
+  <section id="langgraph">
+    <div class="container">
+      <div class="section-header">
+        <p>Execution Pipeline</p>
+        <h2>LangGraph Workflows & State DAG</h2>
+      </div>
+
+      <div class="graph-visualizer">
+        <div class="canvas-container">
+          <svg class="graph-svg" id="graphSvg" viewBox="0 0 600 500">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border)" />
+              </marker>
+              <marker id="arrow-active" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
+              </marker>
+            </defs>
+
+            <!-- Links (edges) -->
+            <path id="link-start-advisor" d="M 50 250 L 120 250" class="link" />
+            <path id="link-advisor-gate" d="M 120 250 L 220 250" class="link" />
+            <path id="link-gate-advisor" d="M 220 250 Q 170 310 120 250" class="link" style="display: none;" />
+            <path id="link-gate-researcher" d="M 220 250 L 320 250" class="link" />
+            <path id="link-researcher-pm" d="M 320 250 L 420 250" class="link" />
+            
+            <path id="link-pm-architect" d="M 420 250 C 440 200, 460 150, 480 150" class="link" />
+            <path id="link-pm-marketing" d="M 420 250 C 440 300, 460 350, 480 350" class="link" />
+            
+            <path id="link-architect-em" d="M 480 150 L 540 150" class="link" />
+            <path id="link-em-join" d="M 540 150 C 560 170, 560 230, 560 250" class="link" />
+            <path id="link-marketing-join" d="M 480 350 C 530 350, 550 290, 560 250" class="link" />
+            
+            <path id="link-join-end" d="M 560 250 L 590 250" class="link" />
+
+            <!-- START node -->
+            <g class="node special" id="node-start" transform="translate(50, 250)">
+              <circle r="18" />
+              <text y="4">START</text>
+            </g>
+
+            <!-- Node 1: Startup Advisor -->
+            <g class="node" id="node-advisor" transform="translate(120, 250)">
+              <circle r="22" />
+              <text y="4">ADV</text>
+            </g>
+
+            <!-- Node 2: Risk Gate -->
+            <g class="node gate" id="node-gate" transform="translate(220, 250)">
+              <circle r="22" />
+              <text y="4">GATE</text>
+            </g>
+
+            <!-- Node 3: Market Researcher -->
+            <g class="node" id="node-researcher" transform="translate(320, 250)">
+              <circle r="22" />
+              <text y="4">RES</text>
+            </g>
+
+            <!-- Node 4: Product Manager -->
+            <g class="node" id="node-pm" transform="translate(420, 250)">
+              <circle r="22" />
+              <text y="4">PM</text>
+            </g>
+
+            <!-- Node 5: System Architect -->
+            <g class="node" id="node-architect" transform="translate(480, 150)">
+              <circle r="22" />
+              <text y="4">ARCH</text>
+            </g>
+
+            <!-- Node 6: Engineering Manager -->
+            <g class="node" id="node-em" transform="translate(540, 150)">
+              <circle r="22" />
+              <text y="4">EM</text>
+            </g>
+
+            <!-- Node 7: Marketing Specialist -->
+            <g class="node" id="node-marketing" transform="translate(480, 350)">
+              <circle r="22" />
+              <text y="4">MKT</text>
+            </g>
+
+            <!-- Node 8: Join Node -->
+            <g class="node special" id="node-join" transform="translate(560, 250)">
+              <circle r="18" />
+              <text y="4">JOIN</text>
+            </g>
+
+            <!-- END node -->
+            <g class="node special" id="node-end" transform="translate(590, 250)">
+              <circle r="12" />
+            </g>
+          </svg>
+        </div>
+
+        <div class="detail-pane" id="nodeDetailPane">
+          <div class="detail-header">
+            <h3 class="detail-title" id="paneTitle">Select a Node</h3>
+            <span class="detail-subtitle" id="paneSubtitle">Hover/Click graph elements</span>
+          </div>
+          
+          <div class="detail-section">
+            <h4><i data-lucide="user"></i> Role & Purpose</h4>
+            <p id="paneRole">Click on a node in the state graph to inspect details regarding its responsibilities, the active LLM router, required inputs, and the verified Pydantic schema structure.</p>
+          </div>
+
+          <div class="detail-section" id="paneLlmSection" style="display: none;">
+            <h4><i data-lucide="cpu"></i> Model & Provider</h4>
+            <div id="paneLlmBadges"></div>
+          </div>
+
+          <div class="detail-section" id="paneSchemaSection" style="display: none;">
+            <h4><i data-lucide="file-json"></i> Output Schema</h4>
+            <span class="badge badge-accent" id="paneSchemaName">PydanticModel</span>
+            <pre class="schema-block" id="paneSchemaCode"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Directory Explorer Section -->
+  <section id="structure">
+    <div class="container">
+      <div class="section-header">
+        <p>System Overview</p>
+        <h2>Project Directory Structure & Files</h2>
+      </div>
+
+      <div class="file-explorer">
+        <!-- Tree sidebar -->
+        <div class="tree-view">
+          <div class="tree-node expanded" id="dir-root">
+            <div class="tree-node-title" onclick="toggleTreeNode(this)">
+              <i data-lucide="folder-open"></i> root/
+            </div>
+            <div class="tree-node-children" style="display: block;">
+              
+              <!-- backend/ -->
+              <div class="tree-node expanded">
+                <div class="tree-node-title" onclick="toggleTreeNode(this)">
+                  <i data-lucide="folder-open"></i> backend/
+                </div>
+                <div class="tree-node-children" style="display: block;">
+                  <div class="tree-node" data-file="backend/main.py">
+                    <div class="tree-node-title"><i data-lucide="file-text"></i> main.py</div>
+                  </div>
+                  <div class="tree-node" data-file="backend/graph.py">
+                    <div class="tree-node-title"><i data-lucide="file-text"></i> graph.py</div>
+                  </div>
+                  <div class="tree-node" data-file="backend/models.py">
+                    <div class="tree-node-title"><i data-lucide="file-text"></i> models.py</div>
+                  </div>
+                  <div class="tree-node" data-file="backend/db.py">
+                    <div class="tree-node-title"><i data-lucide="file-text"></i> db.py</div>
+                  </div>
+                  <div class="tree-node" data-file="backend/config.py">
+                    <div class="tree-node-title"><i data-lucide="file-text"></i> config.py</div>
+                  </div>
+                  
+                  <!-- backend/tools/ -->
+                  <div class="tree-node">
+                    <div class="tree-node-title" onclick="toggleTreeNode(this)">
+                      <i data-lucide="folder"></i> tools/
+                    </div>
+                    <div class="tree-node-children">
+                      <div class="tree-node" data-file="backend/tools/tavily.py">
+                        <div class="tree-node-title"><i data-lucide="file-text"></i> tavily.py</div>
+                      </div>
+                      <div class="tree-node" data-file="backend/tools/github.py">
+                        <div class="tree-node-title"><i data-lucide="file-text"></i> github.py</div>
+                      </div>
+                      <div class="tree-node" data-file="backend/tools/notion.py">
+                        <div class="tree-node-title"><i data-lucide="file-text"></i> notion.py</div>
+                      </div>
+                      <div class="tree-node" data-file="backend/tools/pdf_export.py">
+                        <div class="tree-node-title"><i data-lucide="file-text"></i> pdf_export.py</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- frontend/ -->
+              <div class="tree-node">
+                <div class="tree-node-title" onclick="toggleTreeNode(this)">
+                  <i data-lucide="folder"></i> frontend/
+                </div>
+                <div class="tree-node-children">
+                  <div class="tree-node" data-file="frontend/globals.css">
+                    <div class="tree-node-title"><i data-lucide="file-text"></i> globals.css</div>
+                  </div>
+                  <div class="tree-node" data-file="frontend/app/layout.tsx">
+                    <div class="tree-node-title"><i data-lucide="file-text"></i> layout.tsx</div>
+                  </div>
+                  <div class="tree-node" data-file="frontend/app/page.tsx">
+                    <div class="tree-node-title"><i data-lucide="file-text"></i> page.tsx</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- File display pane -->
+        <div class="file-view">
+          <div id="fileDetailPrompt">
+            <h3 class="file-name"><i data-lucide="mouse-pointer-click"></i> Select a file</h3>
+            <p class="file-path">Click any file on the left side tree-view to display its purpose, exports, dependencies, and architecture relationships.</p>
+          </div>
+          <div id="fileDetailContent" style="display: none;">
+            <div class="file-header">
+              <h3 class="file-name" id="fileName">main.py</h3>
+              <div class="file-path" id="filePath">backend/main.py</div>
+            </div>
+            <div class="detail-section">
+              <h4><i data-lucide="info"></i> Responsibility</h4>
+              <p id="fileDesc"></p>
+            </div>
+            <div class="detail-section" id="fileExportsSection">
+              <h4><i data-lucide="arrow-up-right"></i> Exports & Imports</h4>
+              <div id="fileExports"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Deep Dive Tabs Section -->
+  <section id="deepdive">
+    <div class="container">
+      <div class="section-header">
+        <p>Technical Core</p>
+        <h2>Architectural Deep Dives</h2>
+      </div>
+
+      <div class="tab-container">
+        <div class="tab-headers">
+          <button class="tab-btn active" onclick="switchTab('langgraph-tab')">LangGraph vs Chains</button>
+          <button class="tab-btn" onclick="switchTab('json-tab')">JSON Architecture</button>
+          <button class="tab-btn" onclick="switchTab('pdf-tab')">PDF Generation</button>
+          <button class="tab-btn" onclick="switchTab('integrations-tab')">APIs & Integrations</button>
+        </div>
+
+        <!-- Tab 1: LangGraph -->
+        <div class="tab-content active" id="langgraph-tab">
+          <div class="grid-2">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">Why LangGraph?</h3>
+              <p style="margin-bottom: 1rem;">
+                Traditional AI agent systems rely on basic sequential execution chains (e.g. LLM 1 output directly flows to LLM 2 input). While simple, this approach fails under production requirements like conditional loops, human interventions, and parallel streams.
+              </p>
+              <p style="margin-bottom: 1.5rem;">
+                LangGraph models workflows as stateful Directed Acyclic Graphs (DAGs) and cyclic graphs. It introduces three core primitives that make it superior:
+              </p>
+              <ul class="interactive-list">
+                <li class="interactive-list-item">
+                  <h4><i data-lucide="database"></i> Shared Graph State</h4>
+                  <p>A single type-safe schema (Pydantic model) is passed between all nodes. Agents read exactly what they need and write updates, automatically handled by LangGraph's state reducers.</p>
+                </li>
+                <li class="interactive-list-item">
+                  <h4><i data-lucide="pause-circle"></i> Human-in-the-Loop Gateways</h4>
+                  <p>LangGraph allows thread execution to pause (interrupt) at designated points (e.g., when the Risk Gate is triggered by high risk_scores). The state is checkpointed in SQLite, and execution is resumed using commands.</p>
+                </li>
+                <li class="interactive-list-item">
+                  <h4><i data-lucide="git-branch"></i> Native Branching & Merges</h4>
+                  <p>In Blueprint, after the Product Manager completes the PRD, execution branches in parallel: the Engineering Stream (Architect and EM) and the Growth Stream (Marketing) execute concurrently. They Fan-In at the join node to synthesize the final reports.</p>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">Maestro-level Performance</h3>
+              <p style="margin-bottom: 1rem;">
+                By using LangGraph, Blueprint avoids state pollution and allows different nodes to execute on different LLMs that are suited for that task:
+              </p>
+              <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem; background: rgba(232, 163, 61, 0.03);">
+                <h4 style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-bottom: 0.5rem; text-transform: uppercase;">Node & LLM Specialisation</h4>
+                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <strong>Startup Advisor, Researcher, EM, Marketing:</strong> Groq Llama 3.3 70B (ultra-fast inference, high instruction adherence).
+                </p>
+                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <strong>Product Manager:</strong> Google Gemini 2.5 Flash (massive context window, ideal for cross-referencing research logs).
+                </p>
+                <p style="font-size: 0.85rem;">
+                  <strong>System Architect:</strong> NVIDIA NIM Nemotron 70B (high technical precision, perfect for generating databases and schemas).
+                </p>
+              </div>
+              <p>
+                This multi-provider routing represents a major optimization over single-model systems. The system avoids latency bottlenecks by using Groq for rapid-response nodes, while utilizing specialized engines where reasoning depth or context scale is mandatory.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: JSON -->
+        <div class="tab-content" id="json-tab">
+          <div class="grid-2">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">JSON as the Architectural Glue</h3>
+              <p style="margin-bottom:1rem;">
+                In a complex pipeline involving three separate API providers (Groq, Google, NVIDIA) and multiple databases, standard raw string outputs create fragile boundaries. Blueprint resolves this by using structured JSON as the universal data contract.
+              </p>
+              <p style="margin-bottom:1.5rem;">
+                JSON plays a critical role in four distinct areas of the system:
+              </p>
+              <ul class="interactive-list">
+                <li class="interactive-list-item">
+                  <h4><i data-lucide="file-json"></i> LLM Output Validation</h4>
+                  <p>All LLM prompt calls enforce JSON schema formatting. Groq is queried with JSON mode enabled, and the resulting JSON string is parsed and validated against custom Pydantic schemas in models.py, ensuring no malformed outputs break the graph.</p>
+                </li>
+                <li class="interactive-list-item">
+                  <h4><i data-lucide="save"></i> Session Persistence</h4>
+                  <p>In db.py, when save_artifact is called, the state object is converted to JSON string and stored in the database. When a session is resumed or requested, these JSON columns are deserialized back into Pydantic models.</p>
+                </li>
+                <li class="interactive-list-item">
+                  <h4><i data-lucide="refresh-cw"></i> Client Communication</h4>
+                  <p>FastAPI routes serialize internal data structures into clean REST JSON responses. The Next.js frontend uses these models to display state, update loaders, and populate logs.</p>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">Pydantic State Model</h3>
+              <p style="font-size: 0.9rem; margin-bottom:1rem; color: var(--text-muted);">
+                Below is the core GraphState definition, showing how Pydantic annotations govern the state and merge properties across parallel node streams.
+              </p>
+              <pre class="schema-block" style="max-height: 380px;">
+<span class="keyword">class</span> <span class="type">GraphState</span>(BaseModel):
+    session_id: <span class="type">str</span>
+    startup_name: <span class="type">str</span>
+    idea: <span class="type">str</span>
+    github_repo: <span class="type">str</span>
+    status: <span class="type">str</span> = <span class="string">"running"</span>
+    
+    <span class="comment"># Reducers merge dictionaries and lists when parallel nodes complete</span>
+    stages: Annotated[Dict[<span class="type">str</span>, Any], reduce_dict] = Field(default_factory=dict)
+    failed_stages: Annotated[List[<span class="type">str</span>], reduce_list] = Field(default_factory=list)
+
+    <span class="comment"># Intermediate and final outputs</span>
+    startup_advisor: Optional[ValidationResult] = None
+    market_research: Optional[MarketResearchReport] = None
+    product_manager: Optional[PRD] = None
+    architect: Optional[ArchitectureSpec] = None
+    engineering_manager: Optional[IssuesAndSprintPlan] = None
+    marketing: Optional[MarketingAssets] = None
+
+    gate_decision: Optional[<span class="type">str</span>] = None
+    revised_idea: Optional[<span class="type">str</span>] = None
+    github_token: Optional[<span class="type">str</span>] = None</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: PDF Generation -->
+        <div class="tab-content" id="pdf-tab">
+          <div class="grid-2">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">PDF Compiling via xhtml2pdf</h3>
+              <p style="margin-bottom:1rem;">
+                When the graph reaches completion, a final report is compiled. The system uses <code>xhtml2pdf</code> (also known as pisa) to convert HTML and CSS files directly to a printable PDF.
+              </p>
+              <p style="margin-bottom:1rem;">
+                Due to internal engine limitations in xhtml2pdf (which is built on top of ReportLab), standard modern CSS layouts will fail. The compiler enforces strict guidelines:
+              </p>
+              <div class="card" style="padding:1.5rem; margin-bottom: 1.5rem; border-left-color: var(--failed);">
+                <h4 style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--failed); margin-bottom: 0.5rem; text-transform: uppercase;"><i data-lucide="alert-triangle"></i> Engine Hard Limits</h4>
+                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <strong>No Flexbox / Grid:</strong> Flex and grid layouts are completely unsupported. All multi-column outputs (e.g. side-by-side callouts) must be written as legacy HTML <code>&lt;table&gt;</code> structures.
+                </p>
+                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  <strong>No White-Space wrapping:</strong> CSS <code>white-space: pre-wrap</code> fails to wrap text. Code blocks and long comments must be pre-processed and force-wrapped via string utilities.
+                </p>
+                <p style="font-size: 0.85rem;">
+                  <strong>Page Margins & Breaks:</strong> Headers, footers, and page numbers must be defined using custom CSS page margins (<code>@page</code> declarations and counters).
+                </p>
+              </div>
+            </div>
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">HTML-to-PDF Pipeline</h3>
+              <p style="margin-bottom:1rem;">
+                The code inside <code>pdf_export.py</code> builds a single document:
+              </p>
+              <ul class="interactive-list">
+                <li class="interactive-list-item">
+                  <h4>1. Text Sanitisation</h4>
+                  <p>Special characters are HTML-escaped. Newline characters (<code>\n</code>) are replaced with <code>&lt;br/&gt;</code>, and long strings are divided by line wraps to avoid clipping at the page edge.</p>
+                </li>
+                <li class="interactive-list-item">
+                  <h4>2. Micro-component Tables</h4>
+                  <p>Badges (e.g. Must-Have, High Priority) are rendered using table cells with solid background colors and inline styles. Column splits are restricted to width tables (e.g., <code>width: 50%</code>).</p>
+                </li>
+                <li class="interactive-list-item">
+                  <h4>3. Pisa Rendering</h4>
+                  <p>The completed HTML string is loaded, and <code>pisa.CreatePDF()</code> writes the binary output. If any rendering error occurs, the partial file is safely deleted before throwing an exception.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Integrations -->
+        <div class="tab-content" id="integrations-tab">
+          <div class="grid-2">
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">GitHub Issues Sync</h3>
+              <p style="margin-bottom:1rem;">
+                When a founder supplies a <code>github_repo</code> and a valid token, the Engineering Manager node triggers a background sync to create the project's task backlog automatically.
+              </p>
+              <p style="margin-bottom:1rem;">
+                To keep the pipeline fast and prevent timeouts, the issues are synchronized asynchronously:
+              </p>
+              <div class="card" style="padding:1.5rem; margin-bottom: 1.5rem; border-left-color: var(--complete);">
+                <h4 style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--complete); margin-bottom: 0.5rem; text-transform: uppercase;"><i data-lucide="check-circle2"></i> Non-blocking Background Tasks</h4>
+                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  Once the sprint plan is generated, the EM node spawns a background asyncio task (<code>create_github_issues_bulk</code>) to call the GitHub API.
+                </p>
+                <p style="font-size: 0.85rem;">
+                  This avoids blocking the FastAPI response thread. If the sync succeeds or fails, a log is written to the decision ledger, visible to the frontend in the logs drawer.
+                </p>
+              </div>
+            </div>
+            <div>
+              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">Notion Database Exporter</h3>
+              <p style="margin-bottom:1rem;">
+                The Notion integration allows founders to save their startup specs into a unified database. The process involves structural block translation:
+              </p>
+              <ul class="interactive-list">
+                <li class="interactive-list-item">
+                  <h4>1. Page Initialization</h4>
+                  <p>The system contacts <code>api.notion.com</code> using OAuth credentials to create a new page under the specified Notion database ID.</p>
+                </li>
+                <li class="interactive-list-item">
+                  <h4>2. Block Construction</h4>
+                  <p>In notion.py, state artifacts are translated into Notion block objects. Headers, lists, and quotes are converted. Large SQL DDL schema files are placed inside an interactive toggle block with code formatting.</p>
+                </li>
+                <li class="interactive-list-item">
+                  <h4>3. Chunks Appending</h4>
+                  <p>Notion limits page appends to 100 blocks per request. The system splits the assembled blocks into chunks of 80 and makes sequential PATCH requests to avoid hitting API rate limits.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>Blueprint Engine Technical Documentation. Built during edQuest by Team PARALLAX.</p>
+      <p style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">
+        Active Repository: <a href="https://github.com/varun2507027108-oss/AI-Orchestration-System" target="_blank">AI-Orchestration-System</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- State & Logic Script -->
+  <script>
+    // -------------------------------------------------------------
+    // Lucide Icons initialization
+    // -------------------------------------------------------------
+    lucide.createIcons();
+
+    // -------------------------------------------------------------
+    // Theme Toggle Logic
+    // -------------------------------------------------------------
+    const themeToggler = document.getElementById('themeToggler');
+    const themeIcon = document.getElementById('themeIcon');
+    
+    // Default theme is dark
+    let isLight = false;
+    
+    themeToggler.addEventListener('click', () => {
+      isLight = !isLight;
+      if (isLight) {
+        document.body.classList.add('light-theme');
+        themeIcon.setAttribute('data-lucide', 'moon');
+      } else {
+        document.body.classList.remove('light-theme');
+        themeIcon.setAttribute('data-lucide', 'sun');
+      }
+      lucide.createIcons();
+    });
+
+    // -------------------------------------------------------------
+    // Graph Visualizer Interactive Logic
+    // -------------------------------------------------------------
+    const nodes = {
+      'node-start': {
+        title: 'Start Node',
+        subtitle: 'Pipeline Entry Point',
+        role: 'Initiates graph execution. Receives startup details (name, idea, optional github repository details) and updates stage trackers to pending state.',
+        llm: null,
+        schema: null
+      },
+      'node-advisor': {
+        title: 'Startup Advisor',
+        subtitle: 'Groq · Llama 3.3 70B',
+        role: 'Acts as the VC gatekeeper. Evaluates the core idea for market timing, competition, founder fit, margin feasibility, and regulatory red flags. Returns a risk score between 0.0 and 1.0.',
+        llm: { provider: 'Groq', model: 'llama-3.3-70b-versatile', temp: '0.1' },
+        schemaName: 'ValidationResult',
+        schemaCode: 'class ValidationResult(BaseModel):\n    verdict: str  # "Approved" | "Needs Revision"\n    risk_score: float  # 0.0 to 1.0\n    reasoning: str  # Brutally honest thesis\n    red_flags: list[str]  # Critical blockers'
+      },
+      'node-gate': {
+        title: 'Risk Gate',
+        subtitle: 'Human-in-the-Loop Gate',
+        role: 'Triggers a workflow interrupt if risk_score >= 0.6 or red_flags are present. Pauses execution and checkpoints the thread state in SQLite. Resumes once the user submits a gate decision ("continue" or "revise").',
+        llm: null,
+        schemaName: 'GateDecision',
+        schemaCode: 'class GateDecisionRequest(BaseModel):\n    decision: str  # "continue" | "revise"\n    revised_idea: Optional[str] = None'
+      },
+      'node-researcher': {
+        title: 'Market Researcher',
+        subtitle: 'Groq · Llama 3.3 70B + Tavily API',
+        role: 'Performs live web searches using Tavily Search API. Collects real market competitor details, estimates TAM, outlines macro/micro trends, and provides verified source URLs.',
+        llm: { provider: 'Groq / Tavily', model: 'llama-3.3-70b-versatile', temp: '0.1' },
+        schemaName: 'MarketResearchReport',
+        schemaCode: 'class MarketResearchReport(BaseModel):\n    tam_estimate: str\n    competitors: list[Competitor]  # {name, desc, url}\n    trends: list[str]\n    sources: list[str]\n    swot: Optional[SWOTAnalysis] = None\n    gaps: list[str] = []'
+      },
+      'node-pm': {
+        title: 'Product Manager',
+        subtitle: 'Google Gemini · Gemini 2.5 Flash',
+        role: 'Synthesizes the initial concept and market research log. Generates a comprehensive Product Requirements Document (PRD) with product goals, success metrics, user stories, prioritized features, and roadmap phases.',
+        llm: { provider: 'Google Gemini', model: 'gemini-2.5-flash', temp: '0.2' },
+        schemaName: 'PRD',
+        schemaCode: 'class PRD(BaseModel):\n    goals: list[str] = []\n    success_metrics: list[str] = []\n    problem_statement: str\n    user_stories: list[str]  # "As a... I want..."\n    features: list[Feature]  # {name, desc, priority}\n    roadmap_phases: list[RoadmapPhase]'
+      },
+      'node-architect': {
+        title: 'System Architect',
+        subtitle: 'NVIDIA NIM · Llama 3.1 Nemotron 70B',
+        role: 'Designs the database and API contracts. Generates a fully valid SQL DDL script, a visual Mermaid ER diagram string, and an endpoint list describing HTTP method, path, description, and security attributes.',
+        llm: { provider: 'NVIDIA NIM', model: 'nvidia/llama-3.1-nemotron-70b-instruct', temp: '0.1' },
+        schemaName: 'ArchitectureSpec',
+        schemaCode: 'class ArchitectureSpec(BaseModel):\n    db_schema_sql: str  # PostgreSQL DDL script\n    db_schema_mermaid: str  # Mermaid ER code\n    api_endpoints: list[ApiEndpoint]  # {method, path, desc}\n    system_design_notes: Optional[str] = "N/A"'
+      },
+      'node-em': {
+        title: 'Engineering Manager',
+        subtitle: 'Groq · Llama 3.3 70B + GitHub API',
+        role: 'Converts architectural specifications into sprint backlogs. Lists detailed developer tasks with story points and labels. Launches background asyncio tasks to create issues in the user\'s GitHub repository.',
+        llm: { provider: 'Groq / GitHub API', model: 'llama-3.3-70b-versatile', temp: '0.1' },
+        schemaName: 'IssuesAndSprintPlan',
+        schemaCode: 'class IssuesAndSprintPlan(BaseModel):\n    issues: list[GitHubIssue]  # {title, body, labels, SP}\n    sprints: list[Sprint]  # {name, issue_titles}\n    definition_of_done: list[str]\n    tech_debt_risks: list[str]\n    team_size_recommended: Optional[Union[str, int]]'
+      },
+      'node-marketing': {
+        title: 'Marketing Specialist',
+        subtitle: 'Groq · Llama 3.3 70B',
+        role: 'Operates in parallel with the engineering stream. Drafts copy following the Problem-Agitate-Solve framework, outlines LinkedIn launch posts, writes drip campaigns, proposes pricing tiers, and compiles launch channels.',
+        llm: { provider: 'Groq', model: 'llama-3.3-70b-versatile', temp: '0.85' },
+        schemaName: 'MarketingAssets',
+        schemaCode: 'class MarketingAssets(BaseModel):\n    landing_copy: str  # PAS framework headline/body\n    linkedin_post: str\n    email_campaign: str  # Outreach campaign text\n    pricing_tiers: list[PricingTier]  # Basic / Pro tiers\n    email_sequence: list[EmailStep]  # 5-step drip campaign\n    ninety_day_plan: list[str]\n    launch_channels: list[dict]'
+      },
+      'node-join': {
+        title: 'Join Node',
+        subtitle: 'Pipeline Sync',
+        role: 'Coordinates synchronization. Evaluates parallel streams (Engineering & Marketing) and triggers exports (persists rows to Supabase, generates report PDF, and triggers Notion sync if connected).',
+        llm: null,
+        schema: null
+      }
+    };
+
+    const graphNodeElements = document.querySelectorAll('.node');
+    const links = document.querySelectorAll('.link');
+    const paneTitle = document.getElementById('paneTitle');
+    const paneSubtitle = document.getElementById('paneSubtitle');
+    const paneRole = document.getElementById('paneRole');
+    const paneLlmSection = document.getElementById('paneLlmSection');
+    const paneLlmBadges = document.getElementById('paneLlmBadges');
+    const paneSchemaSection = document.getElementById('paneSchemaSection');
+    const paneSchemaName = document.getElementById('paneSchemaName');
+    const paneSchemaCode = document.getElementById('paneSchemaCode');
+
+    graphNodeElements.forEach(nodeEl => {
+      nodeEl.addEventListener('click', () => {
+        const id = nodeEl.id;
+        const data = nodes[id];
+        
+        if (!data) return;
+
+        // Reset active node classes
+        graphNodeElements.forEach(n => n.classList.remove('active'));
+        nodeEl.classList.add('active');
+
+        // Reset active links
+        links.forEach(l => l.classList.remove('active'));
+        
+        // Activate associated edges
+        if (id === 'node-start') {
+          document.getElementById('link-start-advisor').classList.add('active');
+        } else if (id === 'node-advisor') {
+          document.getElementById('link-advisor-gate').classList.add('active');
+        } else if (id === 'node-gate') {
+          document.getElementById('link-gate-researcher').classList.add('active');
+        } else if (id === 'node-researcher') {
+          document.getElementById('link-researcher-pm').classList.add('active');
+        } else if (id === 'node-pm') {
+          document.getElementById('link-pm-architect').classList.add('active');
+          document.getElementById('link-pm-marketing').classList.add('active');
+        } else if (id === 'node-architect') {
+          document.getElementById('link-architect-em').classList.add('active');
+        } else if (id === 'node-em') {
+          document.getElementById('link-em-join').classList.add('active');
+        } else if (id === 'node-marketing') {
+          document.getElementById('link-marketing-join').classList.add('active');
+        } else if (id === 'node-join') {
+          document.getElementById('link-join-end').classList.add('active');
+        }
+
+        // Update Details Panel
+        paneTitle.textContent = data.title;
+        paneSubtitle.textContent = data.subtitle;
+        paneRole.textContent = data.role;
+
+        // LLM Panel
+        if (data.llm) {
+          paneLlmSection.style.display = 'block';
+          paneLlmBadges.innerHTML = `
+            <span class="badge badge-accent">${data.llm.provider}</span>
+            <span class="badge">${data.llm.model}</span>
+            <span class="badge">Temp: ${data.llm.temp}</span>
+          `;
+        } else {
+          paneLlmSection.style.display = 'none';
+        }
+
+        // Schema Panel
+        if (data.schemaName) {
+          paneSchemaSection.style.display = 'block';
+          paneSchemaName.textContent = data.schemaName;
+          paneSchemaCode.textContent = data.schemaCode;
+        } else {
+          paneSchemaSection.style.display = 'none';
+        }
+      });
+    });
+
+    // -------------------------------------------------------------
+    // Directory Tree Logic
+    // -------------------------------------------------------------
+    const files = {
+      'backend/main.py': {
+        desc: 'FastAPI web server exposing REST endpoints. Mounts static directory for compiled PDF downloads. Manages background async tasks for starting compiled graph thread executions, resuming interrupted gates, and triggering third-party integrations (GitHub/Notion) without blocking client-server response loops.',
+        exports: 'Endpoints: POST /sessions, GET /sessions/{id}, POST /sessions/{id}/gate-decision, POST /sessions/{id}/export, GET /sessions/{id}/decision-log, GET /auth/github, GET /auth/notion'
+      },
+      'backend/graph.py': {
+        desc: 'Defines the LangGraph StateGraph, compiling the workflow nodes, edges, checkpointers, and routers. Implements individual nodes representing each of the 6 agents, calling appropriate LLM APIs, saving updates to GraphState, and appending decision notes to DB ledger tables.',
+        exports: 'Functions: create_graph(), init_saver(), query_groq(), startup_advisor_node(), product_manager_node(), architect_node(), Join_node()'
+      },
+      'backend/models.py': {
+        desc: 'Holds data models representing state. Defines sub-models like Competitor, Feature, RoadmapPhase, and GitHubIssue. Enforces type verification for inputs and output schemas. Leverages LangGraph reducer functions to combine state properties concurrently.',
+        exports: 'Classes: GraphState, ValidationResult, MarketResearchReport, PRD, ArchitectureSpec, IssuesAndSprintPlan, MarketingAssets'
+      },
+      'backend/db.py': {
+        desc: 'Coordinates state persistence. Inserts session parameters and updates status. Serializes Pydantic schemas into JSON strings for database insertion. Includes a local SQLite database file framework as a reliable fallback when Supabase connection parameters are missing or error out.',
+        exports: 'Functions: save_session(), update_session_status(), save_artifact(), get_latest_artifact(), add_decision_log(), get_decision_log()'
+      },
+      'backend/config.py': {
+        desc: 'Manages configuration and system keys. Uses pydantic-settings BaseSettings to parse environment variables from the .env file. Outlines defaults for model configurations and sets credentials fallback logic.',
+        exports: 'Variables: settings (pydantic BaseSettings instance)'
+      },
+      'backend/tools/tavily.py': {
+        desc: 'Wrapper for Tavily Search API. Formulates search queries on behalf of the Market Researcher agent, retrieves organic search results, filters URLs, and compiles descriptions for competitor analysis.',
+        exports: 'Functions: search_tavily(query: str) -> list'
+      },
+      'backend/tools/github.py': {
+        desc: 'GitHub REST client. Takes issue logs generated by the Engineering Manager, structures issue bodies containing context descriptions and story points, and bulk creates issues on the founder\'s repository via OAuth tokens.',
+        exports: 'Functions: create_github_issue(), create_github_issues_bulk()'
+      },
+      'backend/tools/notion.py': {
+        desc: 'Notion database integration client. Maps state artifacts into distinct Notion blocks (headings, paragraphs, quotes, toggles). Creates database pages and pushes content logs in batches of 80 to circumvent Notion API limits.',
+        exports: 'Functions: create_notion_page(), append_notion_blocks(), translate_artifact_to_notion_blocks()'
+      },
+      'backend/tools/pdf_export.py': {
+        desc: 'xhtml2pdf report compiler. Assembles a single HTML page containing the compiled session artifacts, styles layout components using strictly compliant CSS styling rules, and renders a PDF to the exports/ directory.',
+        exports: 'Functions: export_to_pdf(), generate_report_html(), clean(), clean_pre()'
+      },
+      'frontend/globals.css': {
+        desc: 'Root CSS stylesheet loading Tailwind CSS v4. Outlines dark and light theme palette colors and view-transition settings.',
+        exports: 'Import directives: @import "tailwindcss"; @import "tw-animate-css";'
+      },
+      'frontend/app/layout.tsx': {
+        desc: 'Next.js root page layout wrapping application components in the JetBrains Mono font context and loading the ThemeProvider wrapper.',
+        exports: 'Component: RootLayout({ children })'
+      },
+      'frontend/app/page.tsx': {
+        desc: 'Main landing page for the Blueprint system. Introduces the multi-agent orchestration thesis, lists agent roles, and directs the user to launch a pipeline session.',
+        exports: 'Component: LandingPage()'
+      }
+    };
+
+    function toggleTreeNode(element) {
+      const parent = element.parentElement;
+      parent.classList.toggle('expanded');
+      
+      const icon = element.querySelector('i');
+      if (parent.classList.contains('expanded')) {
+        icon.setAttribute('data-lucide', 'folder-open');
+      } else {
+        icon.setAttribute('data-lucide', 'folder');
+      }
+      lucide.createIcons();
+    }
+
+    const treeFileElements = document.querySelectorAll('[data-file]');
+    const fileDetailPrompt = document.getElementById('fileDetailPrompt');
+    const fileDetailContent = document.getElementById('fileDetailContent');
+    const fileNameEl = document.getElementById('fileName');
+    const filePathEl = document.getElementById('filePath');
+    const fileDescEl = document.getElementById('fileDesc');
+    const fileExportsEl = document.getElementById('fileExports');
+
+    treeFileElements.forEach(fileEl => {
+      fileEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        const path = fileEl.getAttribute('data-file');
+        const data = files[path];
+        
+        if (!data) return;
+
+        // Reset active files
+        treeFileElements.forEach(f => f.classList.remove('active'));
+        fileEl.classList.add('active');
+
+        // Show details
+        fileDetailPrompt.style.display = 'none';
+        fileDetailContent.style.display = 'block';
+
+        fileNameEl.textContent = path.split('/').pop();
+        filePathEl.textContent = path;
+        fileDescEl.textContent = data.desc;
+        fileExportsEl.innerHTML = `<code class="schema-block" style="background:#0b0f14; padding:0.75rem; border-radius:4px; max-height:none; font-size:0.7rem; color:#E2E8F0;">${data.exports}</code>`;
+      });
+    });
+
+    // -------------------------------------------------------------
+    // Tab Controller Logic
+    // -------------------------------------------------------------
+    function switchTab(tabId) {
+      // Deactivate all tab headers and contents
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const tabContents = document.querySelectorAll('.tab-content');
+
+      tabBtns.forEach(btn => btn.classList.remove('active'));
+      tabContents.forEach(content => content.classList.remove('active'));
+
+      // Find trigger button and activate it
+      const targetBtn = Array.from(tabBtns).find(btn => btn.getAttribute('onclick').includes(tabId));
+      if (targetBtn) targetBtn.classList.add('active');
+
+      // Activate content
+      const targetContent = document.getElementById(tabId);
+      if (targetContent) targetContent.classList.add('active');
+    }
+  </script>
+</body>
+</html>
