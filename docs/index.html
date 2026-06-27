@@ -3,55 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blueprint Engine | AI Founder Orchestration System</title>
+  <title>Blueprint Engine | Stateful Multi-Agent Orchestrator</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
   
   <style>
     :root {
-      /* Theme variables: Dark Theme by default */
       --bg: #05070A;
-      --panel: #11161C;
+      --panel: #0E1324;
+      --panel-light: #161C2E;
       --border: rgba(255, 255, 255, 0.08);
+      --border-active: rgba(245, 158, 11, 0.4);
       --text: #ECEAE3;
       --text-muted: #8A8F99;
-      --accent: #E8A33D;
-      --accent-muted: rgba(232, 163, 61, 0.1);
+      --accent: #F59E0B;
+      --accent-muted: rgba(245, 158, 11, 0.06);
+      --accent-glow: rgba(245, 158, 11, 0.2);
       
-      --complete: #3FB950;
-      --complete-muted: rgba(63, 185, 80, 0.1);
-      --failed: #E5484D;
-      --failed-muted: rgba(229, 72, 77, 0.1);
-      --pending: #6B7280;
+      --complete: #10B981;
+      --complete-muted: rgba(16, 185, 129, 0.08);
+      --failed: #EF4444;
+      --failed-muted: rgba(239, 68, 68, 0.08);
+      --blue: #3B82F6;
+      --blue-muted: rgba(59, 130, 246, 0.08);
       
       --font-mono: 'JetBrains Mono', monospace;
       --font-sans: 'Outfit', sans-serif;
     }
 
     .light-theme {
-      --bg: #ECEAE3;
-      --panel: #FAFAFA;
-      --border: rgba(0, 0, 0, 0.1);
-      --text: #0B0F14;
-      --text-muted: #6B7280;
-      --accent: #D78A22;
-      --accent-muted: rgba(215, 138, 34, 0.1);
+      --bg: #F8FAFC;
+      --panel: #FFFFFF;
+      --panel-light: #F1F5F9;
+      --border: rgba(15, 23, 42, 0.08);
+      --border-active: rgba(245, 158, 11, 0.5);
+      --text: #0F172A;
+      --text-muted: #64748B;
+      --accent: #D97706;
+      --accent-muted: rgba(217, 119, 6, 0.06);
+      --accent-glow: rgba(217, 119, 6, 0.15);
       
-      --complete: #2DA44E;
-      --complete-muted: rgba(45, 164, 78, 0.1);
-      --failed: #CF222E;
-      --failed-muted: rgba(207, 34, 46, 0.1);
+      --complete: #059669;
+      --complete-muted: rgba(5, 150, 105, 0.08);
+      --failed: #DC2626;
+      --failed-muted: rgba(220, 38, 38, 0.08);
+      --blue: #2563EB;
+      --blue-muted: rgba(37, 99, 235, 0.08);
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
     }
 
     body {
@@ -60,50 +67,52 @@
       font-family: var(--font-sans);
       line-height: 1.6;
       overflow-x: hidden;
+      transition: background-color 0.3s, color 0.3s;
     }
 
     code, pre {
       font-family: var(--font-mono);
     }
 
-    /* Scrollbars */
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 6px;
+      height: 6px;
     }
     ::-webkit-scrollbar-track {
       background: var(--bg);
     }
     ::-webkit-scrollbar-thumb {
       background: var(--border);
-      border-radius: 4px;
+      border-radius: 3px;
     }
     ::-webkit-scrollbar-thumb:hover {
       background: var(--text-muted);
     }
 
-    /* Container Utility */
     .container {
-      max-width: 1200px;
+      max-width: 1280px;
       margin: 0 auto;
       padding: 0 2rem;
     }
 
-    /* Header styling */
+    /* Fixed Navigation */
     header {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       height: 70px;
-      background: rgba(var(--bg), 0.8);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-b: 1px solid var(--border);
+      background: rgba(5, 7, 10, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
       z-index: 100;
       display: flex;
       align-items: center;
-      border-bottom: 1px solid var(--border);
+    }
+
+    .light-theme header {
+      background: rgba(248, 250, 252, 0.8);
     }
 
     header .nav-container {
@@ -115,15 +124,15 @@
 
     .logo {
       font-family: var(--font-mono);
-      font-weight: 700;
-      font-size: 0.95rem;
+      font-weight: 800;
+      font-size: 1rem;
       letter-spacing: 0.2em;
       text-transform: uppercase;
       color: var(--text);
       text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .logo span {
@@ -139,7 +148,7 @@
     nav a {
       font-family: var(--font-mono);
       font-size: 0.75rem;
-      font-weight: 500;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-muted);
@@ -158,7 +167,7 @@
       cursor: pointer;
       width: 38px;
       height: 38px;
-      border-radius: 6px;
+      border-radius: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -173,7 +182,7 @@
     /* Hero Section */
     .hero {
       position: relative;
-      min-height: 100vh;
+      min-height: 85vh;
       display: flex;
       align-items: center;
       padding-top: 100px;
@@ -182,13 +191,13 @@
 
     .hero-glow {
       position: absolute;
-      top: 50%;
+      top: 40%;
       left: 50%;
-      transform: translate(-translate-x, -translate-y);
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, var(--accent-muted) 0%, transparent 70%);
-      filter: blur(80px);
+      transform: translate(-50%, -50%);
+      width: 700px;
+      height: 700px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 65%);
+      filter: blur(100px);
       pointer-events: none;
       z-index: 1;
     }
@@ -196,7 +205,7 @@
     .hero-content {
       position: relative;
       z-index: 2;
-      max-width: 800px;
+      max-width: 900px;
     }
 
     .hero-tag {
@@ -206,14 +215,18 @@
       text-transform: uppercase;
       letter-spacing: 0.2em;
       margin-bottom: 1.5rem;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
+      background: var(--accent-muted);
+      padding: 0.5rem 1rem;
+      border-radius: 100px;
+      border: 1px solid rgba(245, 158, 11, 0.15);
     }
 
     .hero h1 {
-      font-size: 3.5rem;
-      font-weight: 700;
+      font-size: 3.8rem;
+      font-weight: 800;
       line-height: 1.1;
       text-transform: uppercase;
       letter-spacing: -0.02em;
@@ -222,19 +235,22 @@
 
     .hero h1 span {
       color: var(--accent);
+      background: linear-gradient(90deg, var(--accent) 0%, #F59E0B 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     .hero p {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       color: var(--text-muted);
       margin-bottom: 2.5rem;
-      max-width: 600px;
+      max-width: 750px;
+      line-height: 1.7;
     }
 
     .btn-group {
       display: flex;
       gap: 1rem;
-      flex-wrap: wrap;
     }
 
     .btn {
@@ -242,39 +258,490 @@
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.1em;
+      padding: 1rem 2rem;
+      border-radius: 6px;
       text-decoration: none;
-      padding: 1.25rem 2.25rem;
-      border-radius: 4px;
-      transition: all 0.2s;
-      cursor: pointer;
       display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #05070A;
+    }
+
+    .btn-primary:hover {
+      background: #D97706;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--panel);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--panel-light);
+      border-color: var(--text-muted);
+    }
+
+    /* Interactive Live Simulator Section */
+    .sim-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 4rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .sim-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sim-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sim-controls {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .control-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .select-preset, .text-input {
+      font-family: var(--font-mono);
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 0.65rem 1rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      outline: none;
+      cursor: pointer;
+      min-width: 220px;
+    }
+
+    .text-input {
+      cursor: text;
+    }
+
+    .select-preset:focus, .text-input:focus {
+      border-color: var(--accent);
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .slider-container input[type="range"] {
+      width: 100px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .slider-val {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      font-weight: 700;
+      min-width: 35px;
+    }
+
+    /* Layout divisions */
+    .sim-layout {
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 2rem;
+    }
+
+    @media (min-width: 1100px) {
+      .sim-layout {
+        grid-template-cols: 1fr 1fr;
+      }
+    }
+
+    /* SVG Node Graph styling */
+    .graph-panel {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      min-height: 580px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .graph-stage-header {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .graph-svg {
+      width: 100%;
+      height: 100%;
+      flex-grow: 1;
+      min-height: 480px;
+      user-select: none;
+    }
+
+    .node {
+      cursor: pointer;
+    }
+
+    .node circle {
+      fill: var(--panel);
+      stroke: var(--border);
+      stroke-width: 2px;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .node text {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: bold;
+      fill: var(--text-muted);
+      text-anchor: middle;
+      pointer-events: none;
+      transition: fill 0.3s;
+    }
+
+    .node:hover circle {
+      stroke: var(--text-muted);
+      filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.1));
+    }
+
+    /* Node execution status classes */
+    .node.active circle {
+      stroke: var(--accent);
+      fill: var(--accent-muted);
+      stroke-width: 3px;
+      filter: drop-shadow(0 0 12px var(--accent-glow));
+    }
+    .node.active text {
+      fill: var(--accent);
+    }
+
+    .node.complete circle {
+      stroke: var(--complete);
+      fill: var(--complete-muted);
+      stroke-width: 2px;
+    }
+    .node.complete text {
+      fill: var(--complete);
+    }
+
+    .node.failed circle {
+      stroke: var(--failed);
+      fill: var(--failed-muted);
+      stroke-width: 3.5px;
+      filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.25));
+    }
+    .node.failed text {
+      fill: var(--failed);
+    }
+
+    .node.gate circle {
+      stroke: var(--blue);
+    }
+    .node.gate.active circle {
+      fill: var(--blue-muted);
+      stroke-width: 3px;
+      filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.3));
+    }
+    .node.gate.active text {
+      fill: var(--blue);
+    }
+    .node.gate.complete circle {
+      stroke: var(--complete);
+      fill: var(--complete-muted);
+    }
+
+    .link {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 1.5px;
+      transition: stroke 0.4s, stroke-width 0.4s;
+    }
+
+    .link.active {
+      stroke: var(--accent);
+      stroke-width: 2.5px;
+      stroke-dasharray: 6 3;
+      animation: dash 1s linear infinite;
+    }
+
+    .link.complete {
+      stroke: var(--complete);
+      stroke-width: 2px;
+    }
+
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -18;
+      }
+    }
+
+    /* Live Output Console and Tabs */
+    .console-panel {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      min-height: 580px;
+      max-height: 580px;
+      overflow: hidden;
+    }
+
+    .console-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+      gap: 1rem;
+    }
+
+    .console-tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.5rem 0.25rem 0.75rem 0.25rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .console-tab-btn:hover {
+      color: var(--text);
+    }
+
+    .console-tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .console-content-pane {
+      flex-grow: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .console-logs {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex-grow: 1;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .log-entry {
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .log-entry.info {
+      color: var(--blue);
+    }
+
+    .log-entry.success {
+      color: var(--complete);
+    }
+
+    .log-entry.warn {
+      color: var(--failed);
+      font-weight: 700;
+    }
+
+    .state-inspector-pane {
+      flex-grow: 1;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1rem;
+      overflow: auto;
+      color: #38BDF8;
+    }
+
+    .node-details-pane {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+
+    .detail-item h5 {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.25rem;
+      letter-spacing: 0.05em;
+    }
+
+    .detail-item p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .detail-prompt-box {
+      background: var(--panel-light);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text);
+      white-space: pre-wrap;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+
+    /* Rendered output panel */
+    .render-output-box {
+      border: 1px solid var(--border);
+      background-color: rgba(0, 0, 0, 0.15);
+      border-radius: 6px;
+      padding: 1.25rem;
+      margin-top: auto;
+      min-height: 180px;
+      max-height: 180px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .render-output-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .render-content {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      flex-grow: 1;
+      overflow-y: auto;
+    }
+
+    /* Interrupt Overlay Card */
+    .interrupt-overlay {
+      background: rgba(14, 19, 36, 0.98);
+      border: 1px solid var(--failed);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-top: 1rem;
+      display: none;
+      box-shadow: 0 10px 30px rgba(239, 68, 68, 0.15);
+    }
+
+    .interrupt-title {
+      color: var(--failed);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .btn-primary {
-      background-color: var(--accent);
-      color: var(--bg);
-      border: 1px solid var(--accent);
+    .interrupt-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.25rem;
     }
 
-    .btn-primary:hover {
+    .btn-sm {
+      padding: 0.5rem 1rem;
+      font-size: 0.7rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .btn-sm-failed {
+      background: var(--failed);
+      color: #FFF;
+    }
+    .btn-sm-secondary {
+      background: var(--panel);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-sm:hover {
       opacity: 0.9;
     }
 
-    .btn-secondary {
-      background-color: var(--panel);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover {
-      background-color: var(--border);
-      border-color: var(--text-muted);
-    }
-
-    /* Sections General */
+    /* Sections general styling */
     section {
       padding: 6rem 0;
       border-top: 1px solid var(--border);
@@ -285,8 +752,8 @@
     }
 
     .section-header h2 {
-      font-size: 2rem;
-      font-weight: 700;
+      font-size: 2.25rem;
+      font-weight: 800;
       text-transform: uppercase;
       letter-spacing: -0.01em;
       margin-bottom: 0.5rem;
@@ -300,27 +767,26 @@
       letter-spacing: 0.2em;
     }
 
-    /* Grid Layout for Docs */
-    .docs-grid {
+    /* Two column grid */
+    .grid-docs {
       display: grid;
       grid-template-cols: 1fr;
-      gap: 2.5rem;
+      gap: 3rem;
     }
 
     @media (min-width: 992px) {
-      .docs-grid {
-        grid-template-cols: 250px 1fr;
+      .grid-docs {
+        grid-template-cols: 280px 1fr;
       }
     }
 
-    /* Table of contents sidebar */
-    .docs-sidebar {
+    .sidebar-toc {
       position: sticky;
       top: 100px;
       height: fit-content;
     }
 
-    .docs-sidebar h3 {
+    .sidebar-toc h3 {
       font-family: var(--font-mono);
       font-size: 0.75rem;
       text-transform: uppercase;
@@ -331,56 +797,46 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .docs-sidebar ul {
+    .sidebar-toc ul {
       list-style: none;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
 
-    .docs-sidebar a {
+    .sidebar-toc a {
       font-size: 0.9rem;
       color: var(--text-muted);
       text-decoration: none;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      transition: all 0.2s;
     }
 
-    .docs-sidebar a:hover, .docs-sidebar a.active {
+    .sidebar-toc a:hover, .sidebar-toc a.active {
       color: var(--accent);
+      padding-left: 5px;
     }
 
-    .docs-sidebar a i {
+    .sidebar-toc a i {
       width: 16px;
       height: 16px;
     }
 
-    /* Content Cards */
-    .card {
+    /* Content details cards */
+    .docs-card {
       background: var(--panel);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 2.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
       position: relative;
-      overflow: hidden;
     }
 
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 3px;
-      height: 100%;
-      background: var(--accent);
-      opacity: 0.8;
-    }
-
-    .card h3 {
-      font-size: 1.4rem;
-      font-weight: 600;
+    .docs-card h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 1.5rem;
@@ -388,214 +844,85 @@
       align-items: center;
       gap: 12px;
       color: var(--text);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
     }
 
-    .card h3 i {
+    .docs-card h3 i {
       color: var(--accent);
     }
 
-    .card p {
+    .docs-card p {
       color: var(--text-muted);
       font-size: 0.95rem;
       margin-bottom: 1.5rem;
       line-height: 1.7;
     }
 
-    /* Interactive Graph Visualizer */
-    .graph-visualizer {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 2rem;
-      margin-bottom: 3rem;
-      display: grid;
-      grid-template-cols: 1fr;
-      gap: 2rem;
-    }
-
-    @media (min-width: 992px) {
-      .graph-visualizer {
-        grid-template-cols: 1.2fr 0.8fr;
-      }
-    }
-
-    .canvas-container {
-      border: 1px solid var(--border);
-      background-color: var(--bg);
-      border-radius: 6px;
-      overflow: hidden;
-      position: relative;
-      min-height: 480px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .graph-svg {
-      width: 100%;
-      height: 100%;
-      min-height: 480px;
-      user-select: none;
-    }
-
-    /* SVG Graph styling */
-    .node {
-      cursor: pointer;
-    }
-
-    .node circle {
-      fill: var(--panel);
-      stroke: var(--border);
-      stroke-width: 2px;
-      transition: all 0.2s;
-    }
-
-    .node:hover circle, .node.active circle {
-      stroke: var(--accent);
-      fill: var(--accent-muted);
-      filter: drop-shadow(0 0 8px var(--accent));
-    }
-
-    .node text {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      font-weight: bold;
-      fill: var(--text);
-      text-anchor: middle;
-      pointer-events: none;
-    }
-
-    .node.gate circle {
-      stroke: var(--failed);
-    }
-    .node.gate:hover circle, .node.gate.active circle {
-      fill: var(--failed-muted);
-      stroke: var(--failed);
-      filter: drop-shadow(0 0 8px var(--failed));
-    }
-
-    .node.special circle {
-      stroke: var(--complete);
-    }
-    .node.special:hover circle, .node.special.active circle {
-      fill: var(--complete-muted);
-      stroke: var(--complete);
-      filter: drop-shadow(0 0 8px var(--complete));
-    }
-
-    .link {
-      fill: none;
-      stroke: var(--border);
-      stroke-width: 1.5px;
-      marker-end: url(#arrow);
-      transition: stroke 0.3s;
-    }
-
-    .link.active {
-      stroke: var(--accent);
-      stroke-width: 2px;
-    }
-
-    /* Detail Pane */
-    .detail-pane {
-      display: flex;
-      flex-direction: column;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      border-radius: 6px;
-      padding: 1.5rem;
-      height: 100%;
-      overflow-y: auto;
-      max-height: 520px;
-    }
-
-    .detail-header {
-      margin-bottom: 1.25rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .detail-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--accent);
-      margin-bottom: 0.25rem;
-    }
-
-    .detail-subtitle {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .detail-section {
-      margin-bottom: 1.25rem;
-    }
-
-    .detail-section h4 {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+    .docs-card h4 {
+      font-size: 1.1rem;
       color: var(--text);
-      margin-bottom: 0.5rem;
+      margin-top: 1.75rem;
+      margin-bottom: 0.75rem;
+      font-weight: 700;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
 
-    .detail-section h4 i {
-      color: var(--accent);
-      font-size: 0.8rem;
+    .docs-card h4::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 2px;
     }
 
-    .detail-section p {
-      font-size: 0.85rem;
+    .docs-card ul {
+      margin-left: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .docs-card li {
       color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
       line-height: 1.6;
     }
 
-    .badge {
-      display: inline-block;
+    .badge-doc {
+      background-color: var(--accent-muted);
+      color: var(--accent);
+      border: 1px solid rgba(245, 158, 11, 0.2);
       font-family: var(--font-mono);
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       font-weight: 700;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
-      background: var(--border);
-      color: var(--text);
       margin-right: 0.5rem;
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
+      display: inline-block;
     }
 
-    .badge-accent {
-      background: var(--accent-muted);
-      color: var(--accent);
-      border: 1px solid rgba(232, 163, 61, 0.2);
-    }
-
-    /* Code block styling */
-    .schema-block {
-      background: #0B0F14;
+    /* Preformatted Code block */
+    pre.code-block {
+      background: #06090F;
       border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 1rem;
+      border-radius: 6px;
+      padding: 1.25rem;
       overflow-x: auto;
-      max-height: 250px;
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       color: #E2E8F0;
-      margin-top: 0.5rem;
+      line-height: 1.5;
+      margin-top: 1rem;
+      margin-bottom: 1.5rem;
     }
 
-    .keyword { color: #F43F5E; }
+    .keyword { color: #F43F5E; font-weight: bold; }
     .type { color: #06B6D4; }
     .string { color: #10B981; }
-    .comment { color: #64748B; }
+    .comment { color: #64748B; font-style: italic; }
+    .number { color: #F59E0B; }
 
     /* Interactive Directory Tree */
     .file-explorer {
@@ -605,12 +932,12 @@
       overflow: hidden;
       display: grid;
       grid-template-cols: 1fr;
-      min-height: 480px;
+      min-height: 520px;
     }
 
     @media (min-width: 768px) {
       .file-explorer {
-        grid-template-cols: 300px 1fr;
+        grid-template-cols: 340px 1fr;
       }
     }
 
@@ -618,8 +945,8 @@
       border-right: 1px solid var(--border);
       padding: 1.5rem;
       overflow-y: auto;
-      max-height: 500px;
-      background-color: rgba(0, 0, 0, 0.05);
+      max-height: 560px;
+      background-color: rgba(0, 0, 0, 0.15);
     }
 
     .tree-node {
@@ -638,17 +965,19 @@
       border-radius: 4px;
       color: var(--text-muted);
       user-select: none;
+      transition: all 0.15s;
     }
 
     .tree-node-title:hover {
-      background-color: var(--border);
+      background-color: rgba(255, 255, 255, 0.04);
       color: var(--text);
     }
 
     .tree-node.active > .tree-node-title {
       background-color: var(--accent-muted);
       color: var(--accent);
-      font-weight: 500;
+      font-weight: 700;
+      border: 1px solid rgba(245, 158, 11, 0.1);
     }
 
     .tree-node-children {
@@ -660,11 +989,12 @@
     }
 
     .file-view {
-      padding: 2rem;
+      padding: 2.5rem;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      max-height: 500px;
+      max-height: 560px;
+      background: var(--bg);
     }
 
     .file-header {
@@ -675,7 +1005,7 @@
 
     .file-name {
       font-family: var(--font-mono);
-      font-size: 1.2rem;
+      font-size: 1.25rem;
       font-weight: 700;
       color: var(--text);
       display: flex;
@@ -690,107 +1020,69 @@
       margin-top: 0.25rem;
     }
 
-    /* Tech Deep Dive Tabs */
-    .tab-container {
-      margin-top: 2rem;
-    }
-
-    .tab-headers {
+    /* Q&A Accordion styling */
+    .qa-grid {
       display: flex;
-      border-bottom: 1px solid var(--border);
-      overflow-x: auto;
-      gap: 1.5rem;
-      padding-bottom: 1px;
+      flex-direction: column;
+      gap: 1.25rem;
     }
 
-    .tab-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
+    .qa-item {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .qa-item.expanded {
+      border-color: var(--accent);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .qa-trigger {
+      padding: 1.5rem;
       font-weight: 700;
-      padding: 1rem 0.5rem;
+      font-size: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       cursor: pointer;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-    }
-
-    .tab-btn:hover {
+      user-select: none;
       color: var(--text);
     }
 
-    .tab-btn.active {
+    .qa-trigger:hover {
       color: var(--accent);
-      border-bottom-color: var(--accent);
     }
 
-    .tab-content {
+    .qa-trigger i {
+      transition: transform 0.3s;
+      color: var(--text-muted);
+    }
+
+    .qa-item.expanded .qa-trigger i {
+      transform: rotate(180deg);
+      color: var(--accent);
+    }
+
+    .qa-body {
+      padding: 0 1.5rem 1.5rem 1.5rem;
       display: none;
-      padding: 2.5rem 0;
-      animation: fadeIn 0.4s ease-out;
+      border-top: 1px solid var(--border);
+      background: rgba(0, 0, 0, 0.08);
+      font-size: 0.95rem;
+      color: var(--text-muted);
     }
 
-    .tab-content.active {
+    .qa-item.expanded .qa-body {
       display: block;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-cols: 1fr;
-      gap: 2rem;
-    }
-
-    @media (min-width: 768px) {
-      .grid-2 {
-        grid-template-cols: 1fr 1fr;
-      }
-    }
-
-    .interactive-list {
-      list-style: none;
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .interactive-list-item {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 1.25rem;
-      position: relative;
-    }
-
-    .interactive-list-item h4 {
-      font-size: 0.95rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .interactive-list-item p {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    /* Footer */
+    /* Footer styling */
     footer {
       border-top: 1px solid var(--border);
-      padding: 3rem 0;
+      padding: 4rem 0;
       background: var(--panel);
       text-align: center;
       color: var(--text-muted);
@@ -807,12 +1099,11 @@
       text-decoration: underline;
     }
 
-    /* Grid layout backgrounds for visual polish */
     .grid-bg-overlay {
       background-size: 24px 24px;
       background-image: 
-        linear-gradient(to right, rgba(128, 128, 128, 0.05) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(128, 128, 128, 0.05) 1px, transparent 1px);
+        linear-gradient(to right, rgba(128, 128, 128, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(128, 128, 128, 0.03) 1px, transparent 1px);
     }
   </style>
 </head>
@@ -822,14 +1113,15 @@
   <header>
     <div class="container nav-container">
       <a href="#" class="logo">
-        <i data-lucide="layers" style="color: var(--accent);"></i>
+        <i data-lucide="dna" style="color: var(--accent);"></i>
         BLUEPRINT <span>ENGINE</span>
       </a>
       <nav>
         <a href="#hero" class="active">Overview</a>
+        <a href="#simulator">Simulator</a>
         <a href="#langgraph">Architecture</a>
         <a href="#structure">Codebase</a>
-        <a href="#deepdive">Deep Dives</a>
+        <a href="#qa">Q&A Checklist</a>
         <button class="theme-toggle" id="themeToggler" aria-label="Toggle Theme">
           <i data-lucide="sun" id="themeIcon"></i>
         </button>
@@ -842,201 +1134,547 @@
     <div class="hero-glow"></div>
     <div class="container hero-content">
       <div class="hero-tag">
-        <i data-lucide="sparkles"></i> MULTI-AGENT ORCHESTRATION
+        <i data-lucide="cpu"></i> State-of-the-Art Multi-Agent Orchestrator
       </div>
-      <h1>Stateful AI<br>Startup <span>Orchestrator</span></h1>
+      <h1>🧬 Blueprint.ai <span>Whitepaper</span></h1>
       <p>
-        Blueprint is a production-grade multi-agent workspace built on FastAPI, Next.js 15, and LangGraph. It takes a raw startup thesis and coordinates six specialized AI actors to assemble investor-ready reports, architectures, sprint backlogs, and landing copy in minutes.
+        An enterprise-grade, stateful multi-agent system built on Next.js 15, FastAPI, and LangGraph. Submit a startup thesis and coordinate six specialized AI agents to generate structured PRDs, database schemas, sprint backlogs, and landing copy in under 30 seconds.
       </p>
       <div class="btn-group">
-        <a href="#langgraph" class="btn btn-primary">
-          Explore Architecture <i data-lucide="arrow-right"></i>
+        <a href="#simulator" class="btn btn-primary">
+          Launch Live Simulator <i data-lucide="play"></i>
         </a>
-        <a href="#structure" class="btn btn-secondary">
-          Browse File Tree
+        <a href="#langgraph" class="btn btn-secondary">
+          Explore Technical Specs
         </a>
       </div>
     </div>
   </section>
 
-  <!-- LangGraph Node Visualizer Section -->
-  <section id="langgraph">
+  <!-- Interactive Live Simulator Section -->
+  <section id="simulator" style="background: rgba(0,0,0,0.15);">
     <div class="container">
       <div class="section-header">
-        <p>Execution Pipeline</p>
-        <h2>LangGraph Workflows & State DAG</h2>
+        <p>Dynamic Playgrounds</p>
+        <h2>Interactive Pipeline Simulator</h2>
       </div>
 
-      <div class="graph-visualizer">
-        <div class="canvas-container">
-          <svg class="graph-svg" id="graphSvg" viewBox="0 0 600 500">
-            <defs>
-              <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border)" />
-              </marker>
-              <marker id="arrow-active" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
-              </marker>
-            </defs>
-
-            <!-- Links (edges) -->
-            <path id="link-start-advisor" d="M 50 250 L 120 250" class="link" />
-            <path id="link-advisor-gate" d="M 120 250 L 220 250" class="link" />
-            <path id="link-gate-advisor" d="M 220 250 Q 170 310 120 250" class="link" style="display: none;" />
-            <path id="link-gate-researcher" d="M 220 250 L 320 250" class="link" />
-            <path id="link-researcher-pm" d="M 320 250 L 420 250" class="link" />
-            
-            <path id="link-pm-architect" d="M 420 250 C 440 200, 460 150, 480 150" class="link" />
-            <path id="link-pm-marketing" d="M 420 250 C 440 300, 460 350, 480 350" class="link" />
-            
-            <path id="link-architect-em" d="M 480 150 L 540 150" class="link" />
-            <path id="link-em-join" d="M 540 150 C 560 170, 560 230, 560 250" class="link" />
-            <path id="link-marketing-join" d="M 480 350 C 530 350, 550 290, 560 250" class="link" />
-            
-            <path id="link-join-end" d="M 560 250 L 590 250" class="link" />
-
-            <!-- START node -->
-            <g class="node special" id="node-start" transform="translate(50, 250)">
-              <circle r="18" />
-              <text y="4">START</text>
-            </g>
-
-            <!-- Node 1: Startup Advisor -->
-            <g class="node" id="node-advisor" transform="translate(120, 250)">
-              <circle r="22" />
-              <text y="4">ADV</text>
-            </g>
-
-            <!-- Node 2: Risk Gate -->
-            <g class="node gate" id="node-gate" transform="translate(220, 250)">
-              <circle r="22" />
-              <text y="4">GATE</text>
-            </g>
-
-            <!-- Node 3: Market Researcher -->
-            <g class="node" id="node-researcher" transform="translate(320, 250)">
-              <circle r="22" />
-              <text y="4">RES</text>
-            </g>
-
-            <!-- Node 4: Product Manager -->
-            <g class="node" id="node-pm" transform="translate(420, 250)">
-              <circle r="22" />
-              <text y="4">PM</text>
-            </g>
-
-            <!-- Node 5: System Architect -->
-            <g class="node" id="node-architect" transform="translate(480, 150)">
-              <circle r="22" />
-              <text y="4">ARCH</text>
-            </g>
-
-            <!-- Node 6: Engineering Manager -->
-            <g class="node" id="node-em" transform="translate(540, 150)">
-              <circle r="22" />
-              <text y="4">EM</text>
-            </g>
-
-            <!-- Node 7: Marketing Specialist -->
-            <g class="node" id="node-marketing" transform="translate(480, 350)">
-              <circle r="22" />
-              <text y="4">MKT</text>
-            </g>
-
-            <!-- Node 8: Join Node -->
-            <g class="node special" id="node-join" transform="translate(560, 250)">
-              <circle r="18" />
-              <text y="4">JOIN</text>
-            </g>
-
-            <!-- END node -->
-            <g class="node special" id="node-end" transform="translate(590, 250)">
-              <circle r="12" />
-            </g>
-          </svg>
+      <div class="sim-card">
+        <div class="sim-header">
+          <div class="sim-title">
+            <i data-lucide="terminal" style="color: var(--accent);"></i>
+            StateGraph Run Environment
+          </div>
+          <div class="sim-controls">
+            <!-- Custom Idea Input -->
+            <div class="control-group">
+              <span class="control-label">Startup Thesis Idea</span>
+              <input type="text" class="text-input" id="thesisInput" value="AI-Powered Micro-Logistics Optimizer for last-mile delivery drivers." oninput="updateCustomIdea()">
+            </div>
+            <!-- Preset Selector -->
+            <div class="control-group">
+              <span class="control-label">Orchestration Presets</span>
+              <select class="select-preset" id="presetSelect" onchange="loadPreset()">
+                <option value="logiflow">LogiFlow (Micro-Logistics) - Safe Path</option>
+                <option value="solargrid">SolarGrid (Decentralized Energy) - Medium Risk</option>
+                <option value="dropshipper">DropShipper (Low-Moat e-Commerce) - High Risk / Interrupted</option>
+              </select>
+            </div>
+            <!-- Risk Threshold Slider -->
+            <div class="control-group">
+              <span class="control-label">Simulated Risk Factor</span>
+              <div class="slider-container">
+                <input type="range" id="riskSlider" min="0" max="100" value="35" oninput="updateRiskSlider(this.value)">
+                <span class="slider-val" id="riskValue">0.35</span>
+              </div>
+            </div>
+            <!-- Action Buttons -->
+            <div class="control-group" style="justify-content: flex-end; height: 100%;">
+              <div style="display:flex; gap: 0.5rem; margin-top: 14px;">
+                <button class="btn btn-primary" id="btnRunSim" onclick="startSimulation()" style="padding: 0.65rem 1.25rem; font-size: 0.7rem;">
+                  Run Pipeline
+                </button>
+                <button class="btn btn-secondary" id="btnStepSim" onclick="stepSimulation()" style="padding: 0.65rem 1.25rem; font-size: 0.7rem;">
+                  Step
+                </button>
+                <button class="btn btn-secondary" id="btnResetSim" onclick="resetSimUi()" style="padding: 0.65rem 1.25rem; font-size: 0.7rem; color: var(--failed);">
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="detail-pane" id="nodeDetailPane">
-          <div class="detail-header">
-            <h3 class="detail-title" id="paneTitle">Select a Node</h3>
-            <span class="detail-subtitle" id="paneSubtitle">Hover/Click graph elements</span>
-          </div>
-          
-          <div class="detail-section">
-            <h4><i data-lucide="user"></i> Role & Purpose</h4>
-            <p id="paneRole">Click on a node in the state graph to inspect details regarding its responsibilities, the active LLM router, required inputs, and the verified Pydantic schema structure.</p>
+        <div class="sim-layout">
+          <!-- Graph visualization area -->
+          <div class="graph-panel">
+            <div class="graph-stage-header">
+              <span>LANGGRAPH WORKFLOW DIAGRAM (Click nodes to inspect details)</span>
+              <span id="activeNodeText">Status: Idle</span>
+            </div>
+            
+            <svg class="graph-svg" id="simSvg" viewBox="0 0 600 450">
+              <defs>
+                <marker id="sim-arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--border)" />
+                </marker>
+                <marker id="sim-arrow-active" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
+                </marker>
+                <marker id="sim-arrow-complete" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--complete)" />
+                </marker>
+              </defs>
+
+              <!-- Node connections -->
+              <path id="s-link-start-advisor" d="M 60 220 L 130 220" class="link" marker-end="url(#sim-arrow)" />
+              <path id="s-link-advisor-gate" d="M 130 220 L 210 220" class="link" marker-end="url(#sim-arrow)" />
+              <path id="s-link-gate-researcher" d="M 210 220 L 290 220" class="link" marker-end="url(#sim-arrow)" />
+              <path id="s-link-researcher-pm" d="M 290 220 L 370 220" class="link" marker-end="url(#sim-arrow)" />
+              
+              <path id="s-link-pm-architect" d="M 370 220 C 390 170, 410 120, 450 120" class="link" marker-end="url(#sim-arrow)" />
+              <path id="s-link-pm-marketing" d="M 370 220 C 390 270, 410 320, 450 320" class="link" marker-end="url(#sim-arrow)" />
+              
+              <path id="s-link-architect-em" d="M 450 120 L 510 120" class="link" marker-end="url(#sim-arrow)" />
+              <path id="s-link-em-join" d="M 510 120 C 530 140, 530 200, 535 220" class="link" marker-end="url(#sim-arrow)" />
+              <path id="s-link-marketing-join" d="M 450 320 C 510 320, 530 280, 535 220" class="link" marker-end="url(#sim-arrow)" />
+              
+              <path id="s-link-join-end" d="M 535 220 L 580 220" class="link" marker-end="url(#sim-arrow)" />
+
+              <!-- Nodes -->
+              <g class="node special" id="s-node-start" onclick="selectSimNode('start')" transform="translate(60, 220)">
+                <circle r="16" />
+                <text y="3">START</text>
+              </g>
+
+              <g class="node" id="s-node-advisor" onclick="selectSimNode('advisor')" transform="translate(130, 220)">
+                <circle r="20" />
+                <text y="3">ADV</text>
+              </g>
+
+              <g class="node gate" id="s-node-gate" onclick="selectSimNode('gate')" transform="translate(210, 220)">
+                <circle r="20" />
+                <text y="3">GATE</text>
+              </g>
+
+              <g class="node" id="s-node-researcher" onclick="selectSimNode('researcher')" transform="translate(290, 220)">
+                <circle r="20" />
+                <text y="3">RES</text>
+              </g>
+
+              <g class="node" id="s-node-pm" onclick="selectSimNode('pm')" transform="translate(370, 220)">
+                <circle r="20" />
+                <text y="3">PM</text>
+              </g>
+
+              <g class="node" id="s-node-architect" onclick="selectSimNode('architect')" transform="translate(450, 120)">
+                <circle r="20" />
+                <text y="3">ARCH</text>
+              </g>
+
+              <g class="node" id="s-node-em" onclick="selectSimNode('em')" transform="translate(510, 120)">
+                <circle r="20" />
+                <text y="3">EM</text>
+              </g>
+
+              <g class="node" id="s-node-marketing" onclick="selectSimNode('marketing')" transform="translate(450, 320)">
+                <circle r="20" />
+                <text y="3">MKT</text>
+              </g>
+
+              <g class="node special" id="s-node-join" onclick="selectSimNode('join')" transform="translate(535, 220)">
+                <circle r="16" />
+                <text y="3">JOIN</text>
+              </g>
+
+              <g class="node special" id="s-node-end" onclick="selectSimNode('end')" transform="translate(580, 220)">
+                <circle r="10" />
+              </g>
+            </svg>
           </div>
 
-          <div class="detail-section" id="paneLlmSection" style="display: none;">
-            <h4><i data-lucide="cpu"></i> Model & Provider</h4>
-            <div id="paneLlmBadges"></div>
-          </div>
+          <!-- Console, State & Details Panel -->
+          <div class="console-panel">
+            <div class="console-tabs">
+              <button class="console-tab-btn active" id="tabLogs" onclick="switchConsoleTab('logs')">Live Logs</button>
+              <button class="console-tab-btn" id="tabState" onclick="switchConsoleTab('state')">State Inspector</button>
+              <button class="console-tab-btn" id="tabDetails" onclick="switchConsoleTab('details')">Agent Specifications</button>
+            </div>
 
-          <div class="detail-section" id="paneSchemaSection" style="display: none;">
-            <h4><i data-lucide="file-json"></i> Output Schema</h4>
-            <span class="badge badge-accent" id="paneSchemaName">PydanticModel</span>
-            <pre class="schema-block" id="paneSchemaCode"></pre>
+            <div class="console-content-pane">
+              <!-- Live Logs -->
+              <div class="console-logs" id="simLogs">
+                <div class="log-entry">[SYSTEM] Thread ready. Select a preset or write your own idea, then click "Run Pipeline" or "Step".</div>
+              </div>
+
+              <!-- State Inspector -->
+              <div class="state-inspector-pane" id="stateInspector" style="display:none;">
+                <pre id="stateJson" style="color: #38BDF8; font-size: 0.75rem; font-family: var(--font-mono);">{
+  "session_id": "idle",
+  "idea": "",
+  "risk_score": 0.0,
+  "stages": {}
+}</pre>
+              </div>
+
+              <!-- Agent Specifications (Dynamic based on selected node) -->
+              <div class="node-details-pane" id="nodeDetails" style="display:none;">
+                <div class="detail-item">
+                  <h5 id="nodeDetailName">Startup Advisor</h5>
+                  <p id="nodeDetailRole">Evaluates the initial idea for market viability, sizing, unit economics, and competitive advantages.</p>
+                </div>
+                <div class="detail-item">
+                  <h5>System Prompt Strategy</h5>
+                  <div class="detail-prompt-box" id="nodeDetailPrompt">"You are a General Partner at a Sequoia/a16z-caliber VC firm. Deliver a BRUTAL, HONEST evaluation. Apply 5 lenses: Founder-Market Fit, Market Timing, Unit Economics, Competitive Moat, Single Point of Death."</div>
+                </div>
+                <div class="detail-item">
+                  <h5>Pydantic Schema Output Contract</h5>
+                  <pre class="code-block" id="nodeDetailSchema" style="margin: 0.5rem 0; font-size:0.75rem; color:#06B6D4;">class ValidationResult(BaseModel):
+    verdict: str
+    risk_score: float
+    reasoning: str
+    red_flags: list[str]</pre>
+                </div>
+              </div>
+
+              <!-- Live Output Render Area -->
+              <div class="render-output-box" id="renderOutputBox">
+                <div class="render-output-title">
+                  <span id="outputBoxTitle">OUTPUT ARTIFACT</span>
+                  <span id="outputBoxSchema" style="color: var(--accent); font-family: var(--font-mono); font-size: 0.65rem;">None</span>
+                </div>
+                <div class="render-content" id="renderOutputContent">
+                  No active node outputs. Run the simulation to see structured JSON artifacts validate and render.
+                </div>
+              </div>
+
+              <!-- Interrupt Overlay Card -->
+              <div class="interrupt-overlay" id="interruptOverlay">
+                <div class="interrupt-title">
+                  <i data-lucide="alert-octagon"></i> RISK GATE INTERRUPT TRIGGERED
+                </div>
+                <p style="font-size:0.8rem; color: var(--text-muted); margin-bottom:1rem;" id="interruptText">
+                  The Startup Advisor flagged a high risk_score. The thread has paused. Please select an action to resume the thread.
+                </p>
+                <div class="interrupt-actions">
+                  <button class="btn-sm btn-sm-failed" onclick="resumeSimulation('continue')">Force Approve (Continue)</button>
+                  <button class="btn-sm btn-sm-secondary" onclick="resumeSimulation('revise')">Revise Idea</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Interactive Directory Explorer Section -->
+  <!-- Deep Dive Documentation Section -->
+  <section id="langgraph">
+    <div class="container">
+      <div class="grid-docs">
+        
+        <!-- Sidebar Navigation -->
+        <div class="sidebar-toc">
+          <h3>Whitepaper Index</h3>
+          <ul>
+            <li><a href="#sec-stack" class="active" onclick="activateSection('sec-stack')"><i data-lucide="layers"></i> Architecture Stack</a></li>
+            <li><a href="#sec-mechanics" onclick="activateSection('sec-mechanics')"><i data-lucide="git-branch"></i> State Mechanics</a></li>
+            <li><a href="#sec-agents" onclick="activateSection('sec-agents')"><i data-lucide="users"></i> The 6 Agents</a></li>
+            <li><a href="#sec-database" onclick="activateSection('sec-database')"><i data-lucide="database"></i> Split Databases</a></li>
+            <li><a href="#sec-oauth" onclick="activateSection('sec-oauth')"><i data-lucide="shield-check"></i> Security & OAuth</a></li>
+            <li><a href="#sec-frontend" onclick="activateSection('sec-frontend')"><i data-lucide="monitor"></i> Frontend & ERD</a></li>
+            <li><a href="#sec-pdf" onclick="activateSection('sec-pdf')"><i data-lucide="file-text"></i> PDF & Threading</a></li>
+            <li><a href="#sec-deploy" onclick="activateSection('sec-deploy')"><i data-lucide="server"></i> Infrastructure</a></li>
+          </ul>
+        </div>
+
+        <!-- Documentation details panel -->
+        <div class="docs-content">
+          
+          <!-- Stack -->
+          <div class="docs-card" id="sec-stack">
+            <h3><i data-lucide="layers"></i> 1. System Architecture & Tech Stack Rationale</h3>
+            <p>
+              Blueprint is structured as a decoupled web application with separated responsibilities:
+            </p>
+            
+            <span class="badge-doc">Frontend</span> <strong>Next.js 15 (App Router), Tailwind CSS, Framer Motion, React Flow</strong>
+            <p style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+              Next.js handles Server-Side Rendering (SSR) and client routes out of the box. Framer Motion provides the premium animations (auto-advancing tabs, hover reveals). React Flow is used to render an interactive, pan-and-zoomable database ERD diagram from raw AI text by parsing the Mermaid schema.
+            </p>
+            
+            <span class="badge-doc">Backend</span> <strong>FastAPI, Pydantic V2, Uvicorn</strong>
+            <p style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+              FastAPI is asynchronous by default, allowing it to handle hundreds of concurrent status-polling requests without blocking the event loop. Pydantic V2 enforces strict type checks, ensuring the AI outputs always align with the expected JSON structure.
+            </p>
+
+            <span class="badge-doc">Orchestration</span> <strong>LangGraph</strong>
+            <p style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+              Instead of simple linear prompt chains, LangGraph models the workflow as a state machine. This enables parallel branching (Architect and Marketing run simultaneously) and Human-in-the-Loop (HITL) interrupts (pausing execution for user approval).
+            </p>
+
+            <span class="badge-doc">LLM Hardware</span> <strong>Groq Llama 3.3 70B (LPU Inference)</strong>
+            <p style="margin-top: 0.5rem;">
+              Groq leverages specialized LPU (Language Processing Unit) hardware, yielding near-zero latency. It executes the entire 6-agent pipeline in under 30 seconds for free, whereas standard providers would take minutes and incur high transaction costs.
+            </p>
+          </div>
+
+          <!-- Mechanics -->
+          <div class="docs-card" id="sec-mechanics" style="display: none;">
+            <h3><i data-lucide="git-branch"></i> 2. Deep Dive: LangGraph & State Mechanics</h3>
+            <p>
+              LangGraph coordinates state using a centralized state dictionary (<code>GraphState</code>). Unlike standard sequential wrappers, it uses strict merge operators and checkpointers to manage threads.
+            </p>
+
+            <h4>A. GraphState Reducers</h4>
+            <p>
+              When the graph branches into parallel paths (Growth Stream and Engineering Stream), multiple nodes try to update the state at the same time. We use Pydantic annotations with reducer functions:
+            </p>
+            <pre class="code-block">
+<span class="keyword">def</span> <span class="type">reduce_dict</span>(left: <span class="type">Optional</span>[<span class="type">Dict</span>[<span class="type">str</span>, Any]], right: <span class="type">Optional</span>[<span class="type">Dict</span>[<span class="type">str</span>, Any]]) -> <span class="type">Dict</span>[<span class="type">str</span>, Any]:
+    merged = <span class="type">dict</span>(left or {})
+    merged.update(right or {})
+    <span class="keyword">return</span> merged
+
+<span class="keyword">class</span> <span class="type">GraphState</span>(BaseModel):
+    stages: Annotated[Dict[<span class="type">str</span>, Any], reduce_dict] = Field(default_factory=dict)</pre>
+            <p>
+              This tells LangGraph that instead of overwriting the <code>stages</code> variable when parallel threads update it, it must pass the old dict (left) and the new dict (right) to <code>reduce_dict</code> to merge them safely.
+            </p>
+
+            <h4>B. The Human-in-the-Loop Interrupt Flow</h4>
+            <p>
+              If the Startup Advisor flags a risky idea (risk_score > 0.85), it calls LangGraph's <code>interrupt()</code> function.
+            </p>
+            <ol style="margin-left:1.5rem; margin-bottom:1.5rem; color: var(--text-muted); font-size:0.9rem;">
+              <li style="margin-bottom:0.5rem;">The call raises a <code>GraphInterrupt</code> exception.</li>
+              <li style="margin-bottom:0.5rem;">LangGraph halts the thread and writes the current variables and program counter to <code>checkpoints.db</code>.</li>
+              <li style="margin-bottom:0.5rem;">The FastAPI thread terminates, returning <code>awaiting_gate</code> status.</li>
+              <li style="margin-bottom:0.5rem;">The user clicks "Force Approve". The frontend calls <code>POST /sessions/{id}/gate-decision</code>.</li>
+              <li style="margin-bottom:0.5rem;">The backend loads the state from SQLite, issues <code>Command(resume={"decision": "continue"})</code>, and LangGraph resumes execution from the exact line where it paused.</li>
+            </ol>
+          </div>
+
+          <!-- Agents -->
+          <div class="docs-card" id="sec-agents" style="display: none;">
+            <h3><i data-lucide="users"></i> 3. The 6 Agents & Output Contracts</h3>
+            <p>
+              Each agent is guided by a McKinsey/VC-caliber system prompt, and outputs are strictly validated by Pydantic contracts.
+            </p>
+            
+            <div style="display: flex; flex-direction: column; gap: 1.5rem; margin-top: 1rem;">
+              <div>
+                <span class="badge-doc">1. Startup Advisor</span> <strong>Llama 3.3 70B @ Groq</strong>
+                <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.25rem;">
+                  Lenses: Founder-Market Fit, Market Timing, Unit Economics, Competitive Moat, Single Point of Death.
+                  Outputs: <code>ValidationResult</code> (verdict: str, risk_score: float, reasoning: str, red_flags: list).
+                </p>
+              </div>
+              
+              <div>
+                <span class="badge-doc">2. Market Researcher</span> <strong>Llama 3.3 70B @ Groq + Tavily API</strong>
+                <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.25rem;">
+                  Queries Tavily for competitor details and McKinsey TAM/SAM/SOM statistics.
+                  Outputs: <code>MarketResearchReport</code> (tam_estimate: str, competitors: list[Competitor], trends: list[str], SWOT, gaps).
+                </p>
+              </div>
+
+              <div>
+                <span class="badge-doc">3. Product Manager</span> <strong>Gemini 2.5 Flash @ Google</strong>
+                <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.25rem;">
+                  Synthesizes concept logs. Uses MoSCoW prioritization and writes Jobs-to-be-Done (JTBD) user stories.
+                  Outputs: <code>PRD</code> (problem_statement: str, goals: list, features: list[Feature], user_stories: list, roadmap: list).
+                </p>
+              </div>
+
+              <div>
+                <span class="badge-doc">4. System Architect</span> <strong>Llama 3.1 Nemotron 70B @ NVIDIA NIM</strong>
+                <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.25rem;">
+                  Generates PostgreSQL syntax and valid Mermaid.js diagrams, declaring scale ceilings.
+                  Outputs: <code>ArchitectureSpec</code> (db_schema_sql: str, db_schema_mermaid: str, api_endpoints: list, design_notes: str).
+                </p>
+              </div>
+
+              <div>
+                <span class="badge-doc">5. Engineering Manager</span> <strong>Llama 3.3 70B @ Groq + GitHub API</strong>
+                <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.25rem;">
+                  Creates 4 dependency-ordered sprints using Fibonacci story points, and auto-syncs issues to GitHub in background threads.
+                  Outputs: <code>IssuesAndSprintPlan</code> (issues: list[GitHubIssue], sprints: list, definition_of_done: list, risks: list).
+                </p>
+              </div>
+
+              <div>
+                <span class="badge-doc">6. Marketing Specialist</span> <strong>Llama 3.3 70B @ Groq</strong>
+                <p style="font-size:0.85rem; color: var(--text-muted); margin-top:0.25rem;">
+                  Applies the PAS (Problem-Agitate-Solve) copy framework, outlines a 5-step email drip campaign, and sets up tier packages.
+                  Outputs: <code>MarketingAssets</code> (landing_copy: str, linkedin_post: str, pricing_tiers: list, email_sequence: list).
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Database -->
+          <div class="docs-card" id="sec-database" style="display: none;">
+            <h3><i data-lucide="database"></i> 4. Split-Database Architecture</h3>
+            <p>
+              To balance high-frequency execution checkpoints with permanent data resilience, Blueprint operates a split-database architecture.
+            </p>
+            
+            <div style="display:grid; grid-template-cols: 1fr; gap: 1.5rem; margin-top:1.5rem;">
+              <div style="border: 1px solid var(--border); padding: 1.25rem; border-radius: 6px; background: rgba(239, 68, 68, 0.03);">
+                <h4 style="color: var(--failed); font-family: var(--font-mono); font-size:0.85rem; margin-bottom:0.5rem;"><i data-lucide="database"></i> SHORT-TERM: SQLite (LangGraph Checkpointer)</h4>
+                <p style="font-size: 0.85rem; margin-bottom: 0;">
+                  LangGraph needs to log the step-by-step state of execution threads (to support pauses/resumes). This is written to <code>checkpoints.db</code>. Since this database is file-based and local, if the hosting server restarts, it is wiped.
+                </p>
+              </div>
+
+              <div style="border: 1px solid var(--border); padding: 1.25rem; border-radius: 6px; background: rgba(16, 185, 129, 0.03);">
+                <h4 style="color: var(--complete); font-family: var(--font-mono); font-size:0.85rem; margin-bottom:0.5rem;"><i data-lucide="cloud"></i> LONG-TERM: Supabase PostgreSQL (Permanent Artifacts)</h4>
+                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
+                  To ensure that final results and history survive server restarts, all validated artifacts and logging statements are pushed permanently to Supabase.
+                </p>
+                <p style="font-size: 0.85rem; margin-bottom:0;">
+                  <strong>SQLite Fallback:</strong> If Supabase credentials are missing or the connection fails, the system automatically falls back to local tables in <code>founder_os.db</code>, guaranteeing service uptime.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- OAuth -->
+          <div class="docs-card" id="sec-oauth" style="display: none;">
+            <h3><i data-lucide="shield-check"></i> 5. Secure OAuth Exchange & Integrations</h3>
+            <p>
+              Blueprint does not save user API keys on the server. Instead, it utilizes secure OAuth 2.0 flows to interact directly with the user's accounts.
+            </p>
+            
+            <div style="display: flex; flex-direction:column; gap: 1rem; margin-top: 1.5rem;">
+              <div style="border-left: 3px solid var(--accent); padding-left: 1rem;">
+                <h4 style="font-size: 0.95rem; margin-bottom:0.25rem; color: var(--text);">The GitHub Exchange Sequence</h4>
+                <p style="font-size: 0.85rem;">
+                  1. The user clicks "Connect GitHub". The frontend redirects to GitHub's authorization page.<br>
+                  2. GitHub redirects back with a temporary <code>?code=...</code> value.<br>
+                  3. Next.js forwards this code to FastAPI, which exchanges it with <code>GITHUB_CLIENT_SECRET</code> for a secure <code>access_token</code>.<br>
+                  4. The token is stored locally in the browser's <code>localStorage</code>. It is sent as a payload header in execution requests and is never saved in the database.
+                </p>
+              </div>
+
+              <div style="border-left: 3px solid var(--accent); padding-left: 1rem; margin-top:1rem;">
+                <h4 style="font-size: 0.95rem; margin-bottom:0.25rem; color: var(--text);">Notion Block Parsing Complexity</h4>
+                <p style="font-size: 0.85rem;">
+                  Notion's API does not support standard HTML or Markdown streams. In <code>notion.py</code>, we parse agent artifacts into structured Notion blocks (e.g. <code>bulleted_list_item</code>, <code>quote</code>). 
+                  Because Notion limits append operations to 100 blocks per request, our backend automatically splits compiled blocks into batches of 80 before making sequential PATCH requests, avoiding API rate limits.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Frontend -->
+          <div class="docs-card" id="sec-frontend" style="display: none;">
+            <h3><i data-lucide="monitor"></i> 6. Frontend Architecture & React Flow ERD</h3>
+            <p>
+              The frontend is built as a highly responsive Next.js 15 SPA utilizing polling and canvas rendering.
+            </p>
+            
+            <h4>A. Polling and Auto-Advance</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted);">
+              The <code>SessionDashboard</code> component polls the backend status every 1.5 seconds. While running, the UI automatically advances active tabs to match the backend progress, keeping the user in sync with the agent stream.
+            </p>
+
+            <h4>B. React Flow ERD Parser</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted);">
+              Instead of rendering plain Mermaid text, a custom Javascript parser in the dashboard extracts SQL entities using regex:
+            </p>
+            <pre class="code-block">/(\w+)\s*\{([^}]*)\}/g</pre>
+            <p style="font-size:0.9rem; color:var(--text-muted);">
+              Nodes are positioned using the <code>dagre</code> layout engine and rendered as custom table nodes in React Flow, highlighted with primary and foreign key indicators.
+            </p>
+          </div>
+
+          <!-- PDF -->
+          <div class="docs-card" id="sec-pdf" style="display: none;">
+            <h3><i data-lucide="file-text"></i> 7. PDF Generation & Asynchronous Threading</h3>
+            <p>
+              Blueprint exports VC evaluation memos using the <code>xhtml2pdf</code> engine.
+            </p>
+
+            <h4>A. xhtml2pdf Constraints</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted);">
+              Since <code>xhtml2pdf</code> is built on ReportLab, it does not support modern CSS Flexbox or Grid layouts. All layouts (such as SWOT grids and pricing tables) are structured using raw HTML <code>&lt;table&gt;</code> elements. Word wrapping is enforced via a custom function to prevent long strings from breaking margins.
+            </p>
+
+            <h4>B. Non-Blocking Event Loop</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted);">
+              PDF generation is CPU-bound and synchronous. To prevent it from blocking FastAPI's single-threaded event loop, it is delegated to a separate thread pool using:
+            </p>
+            <pre class="code-block">await asyncio.to_thread(export_to_pdf, ...)</pre>
+          </div>
+
+          <!-- Deploy -->
+          <div class="docs-card" id="sec-deploy" style="display: none;">
+            <h3><i data-lucide="server"></i> 8. Deployment & Infrastructure</h3>
+            <p>
+              The production architecture is deployed on cloud-native serverless hosting.
+            </p>
+            <ul>
+              <li><strong>Frontend:</strong> Vercel (Zero-config deployment for Next.js).</li>
+              <li><strong>Backend:</strong> Render Web Services (Python environment).</li>
+              <li><strong>Cold Start Mitigation:</strong> Render's free tier spins down after 15 minutes of inactivity. To prevent a 30-second delay for judges, UptimeRobot is configured to ping the backend's <code>/docs</code> endpoint every 5 minutes to keep it warm.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Codebase File tree explorer section -->
   <section id="structure">
     <div class="container">
       <div class="section-header">
-        <p>System Overview</p>
-        <h2>Project Directory Structure & Files</h2>
+        <p>File System</p>
+        <h2>Project Directory Structure</h2>
       </div>
 
       <div class="file-explorer">
-        <!-- Tree sidebar -->
+        <!-- Tree View -->
         <div class="tree-view">
-          <div class="tree-node expanded" id="dir-root">
-            <div class="tree-node-title" onclick="toggleTreeNode(this)">
-              <i data-lucide="folder-open"></i> root/
-            </div>
-            <div class="tree-node-children" style="display: block;">
+          <div class="tree-node expanded" id="t-root">
+            <div class="tree-node-title" onclick="toggleTreeNode(this)"><i data-lucide="folder-open"></i> root/</div>
+            <div class="tree-node-children" style="display:block;">
               
               <!-- backend/ -->
               <div class="tree-node expanded">
-                <div class="tree-node-title" onclick="toggleTreeNode(this)">
-                  <i data-lucide="folder-open"></i> backend/
-                </div>
-                <div class="tree-node-children" style="display: block;">
-                  <div class="tree-node" data-file="backend/main.py">
+                <div class="tree-node-title" onclick="toggleTreeNode(this)"><i data-lucide="folder-open"></i> backend/</div>
+                <div class="tree-node-children" style="display:block;">
+                  <div class="tree-node" data-file="b-main">
                     <div class="tree-node-title"><i data-lucide="file-text"></i> main.py</div>
                   </div>
-                  <div class="tree-node" data-file="backend/graph.py">
+                  <div class="tree-node" data-file="b-graph">
                     <div class="tree-node-title"><i data-lucide="file-text"></i> graph.py</div>
                   </div>
-                  <div class="tree-node" data-file="backend/models.py">
+                  <div class="tree-node" data-file="b-models">
                     <div class="tree-node-title"><i data-lucide="file-text"></i> models.py</div>
                   </div>
-                  <div class="tree-node" data-file="backend/db.py">
+                  <div class="tree-node" data-file="b-db">
                     <div class="tree-node-title"><i data-lucide="file-text"></i> db.py</div>
                   </div>
-                  <div class="tree-node" data-file="backend/config.py">
+                  <div class="tree-node" data-file="b-config">
                     <div class="tree-node-title"><i data-lucide="file-text"></i> config.py</div>
                   </div>
-                  
-                  <!-- backend/tools/ -->
+                  <!-- tools/ -->
                   <div class="tree-node">
-                    <div class="tree-node-title" onclick="toggleTreeNode(this)">
-                      <i data-lucide="folder"></i> tools/
-                    </div>
+                    <div class="tree-node-title" onclick="toggleTreeNode(this)"><i data-lucide="folder"></i> tools/</div>
                     <div class="tree-node-children">
-                      <div class="tree-node" data-file="backend/tools/tavily.py">
+                      <div class="tree-node" data-file="t-tavily">
                         <div class="tree-node-title"><i data-lucide="file-text"></i> tavily.py</div>
                       </div>
-                      <div class="tree-node" data-file="backend/tools/github.py">
+                      <div class="tree-node" data-file="t-github">
                         <div class="tree-node-title"><i data-lucide="file-text"></i> github.py</div>
                       </div>
-                      <div class="tree-node" data-file="backend/tools/notion.py">
+                      <div class="tree-node" data-file="t-notion">
                         <div class="tree-node-title"><i data-lucide="file-text"></i> notion.py</div>
                       </div>
-                      <div class="tree-node" data-file="backend/tools/pdf_export.py">
+                      <div class="tree-node" data-file="t-pdf">
                         <div class="tree-node-title"><i data-lucide="file-text"></i> pdf_export.py</div>
                       </div>
                     </div>
@@ -1046,17 +1684,15 @@
 
               <!-- frontend/ -->
               <div class="tree-node">
-                <div class="tree-node-title" onclick="toggleTreeNode(this)">
-                  <i data-lucide="folder"></i> frontend/
-                </div>
+                <div class="tree-node-title" onclick="toggleTreeNode(this)"><i data-lucide="folder"></i> frontend/</div>
                 <div class="tree-node-children">
-                  <div class="tree-node" data-file="frontend/globals.css">
+                  <div class="tree-node" data-file="f-css">
                     <div class="tree-node-title"><i data-lucide="file-text"></i> globals.css</div>
                   </div>
-                  <div class="tree-node" data-file="frontend/app/layout.tsx">
+                  <div class="tree-node" data-file="f-layout">
                     <div class="tree-node-title"><i data-lucide="file-text"></i> layout.tsx</div>
                   </div>
-                  <div class="tree-node" data-file="frontend/app/page.tsx">
+                  <div class="tree-node" data-file="f-page">
                     <div class="tree-node-title"><i data-lucide="file-text"></i> page.tsx</div>
                   </div>
                 </div>
@@ -1066,24 +1702,28 @@
           </div>
         </div>
 
-        <!-- File display pane -->
+        <!-- File View Pane -->
         <div class="file-view">
-          <div id="fileDetailPrompt">
+          <div id="filePrompt">
             <h3 class="file-name"><i data-lucide="mouse-pointer-click"></i> Select a file</h3>
-            <p class="file-path">Click any file on the left side tree-view to display its purpose, exports, dependencies, and architecture relationships.</p>
+            <p class="file-path">Click any file on the left side tree-view to display its purpose, exports, and implementation details.</p>
           </div>
-          <div id="fileDetailContent" style="display: none;">
+          <div id="fileDetail" style="display: none;">
             <div class="file-header">
-              <h3 class="file-name" id="fileName">main.py</h3>
-              <div class="file-path" id="filePath">backend/main.py</div>
+              <h3 class="file-name" id="fName">main.py</h3>
+              <div class="file-path" id="fPath">backend/main.py</div>
             </div>
             <div class="detail-section">
               <h4><i data-lucide="info"></i> Responsibility</h4>
-              <p id="fileDesc"></p>
+              <p id="fDesc"></p>
             </div>
-            <div class="detail-section" id="fileExportsSection">
-              <h4><i data-lucide="arrow-up-right"></i> Exports & Imports</h4>
-              <div id="fileExports"></div>
+            <div class="detail-section" id="fConnectSection">
+              <h4><i data-lucide="link"></i> Architectural Connections</h4>
+              <p id="fConnect"></p>
+            </div>
+            <div class="detail-section">
+              <h4><i data-lucide="arrow-up-right"></i> Exports & Hooks</h4>
+              <pre class="schema-block" id="fExports" style="max-height: none; background:#0B0F14; font-size: 0.75rem; color:#E2E8F0; padding: 1rem; border-radius: 6px; border: 1px solid var(--border); overflow-x: auto;"></pre>
             </div>
           </div>
         </div>
@@ -1091,218 +1731,58 @@
     </div>
   </section>
 
-  <!-- Deep Dive Tabs Section -->
-  <section id="deepdive">
+  <!-- Technical Q&A Accordion Section -->
+  <section id="qa">
     <div class="container">
       <div class="section-header">
-        <p>Technical Core</p>
-        <h2>Architectural Deep Dives</h2>
+        <p>Interview Prep</p>
+        <h2>Hard Engineering Q&A Checklist</h2>
       </div>
 
-      <div class="tab-container">
-        <div class="tab-headers">
-          <button class="tab-btn active" onclick="switchTab('langgraph-tab')">LangGraph vs Chains</button>
-          <button class="tab-btn" onclick="switchTab('json-tab')">JSON Architecture</button>
-          <button class="tab-btn" onclick="switchTab('pdf-tab')">PDF Generation</button>
-          <button class="tab-btn" onclick="switchTab('integrations-tab')">APIs & Integrations</button>
-        </div>
-
-        <!-- Tab 1: LangGraph -->
-        <div class="tab-content active" id="langgraph-tab">
-          <div class="grid-2">
-            <div>
-              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">Why LangGraph?</h3>
-              <p style="margin-bottom: 1rem;">
-                Traditional AI agent systems rely on basic sequential execution chains (e.g. LLM 1 output directly flows to LLM 2 input). While simple, this approach fails under production requirements like conditional loops, human interventions, and parallel streams.
-              </p>
-              <p style="margin-bottom: 1.5rem;">
-                LangGraph models workflows as stateful Directed Acyclic Graphs (DAGs) and cyclic graphs. It introduces three core primitives that make it superior:
-              </p>
-              <ul class="interactive-list">
-                <li class="interactive-list-item">
-                  <h4><i data-lucide="database"></i> Shared Graph State</h4>
-                  <p>A single type-safe schema (Pydantic model) is passed between all nodes. Agents read exactly what they need and write updates, automatically handled by LangGraph's state reducers.</p>
-                </li>
-                <li class="interactive-list-item">
-                  <h4><i data-lucide="pause-circle"></i> Human-in-the-Loop Gateways</h4>
-                  <p>LangGraph allows thread execution to pause (interrupt) at designated points (e.g., when the Risk Gate is triggered by high risk_scores). The state is checkpointed in SQLite, and execution is resumed using commands.</p>
-                </li>
-                <li class="interactive-list-item">
-                  <h4><i data-lucide="git-branch"></i> Native Branching & Merges</h4>
-                  <p>In Blueprint, after the Product Manager completes the PRD, execution branches in parallel: the Engineering Stream (Architect and EM) and the Growth Stream (Marketing) execute concurrently. They Fan-In at the join node to synthesize the final reports.</p>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">Maestro-level Performance</h3>
-              <p style="margin-bottom: 1rem;">
-                By using LangGraph, Blueprint avoids state pollution and allows different nodes to execute on different LLMs that are suited for that task:
-              </p>
-              <div class="card" style="padding: 1.5rem; margin-bottom: 1.5rem; background: rgba(232, 163, 61, 0.03);">
-                <h4 style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--accent); margin-bottom: 0.5rem; text-transform: uppercase;">Node & LLM Specialisation</h4>
-                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
-                  <strong>Startup Advisor, Researcher, EM, Marketing:</strong> Groq Llama 3.3 70B (ultra-fast inference, high instruction adherence).
-                </p>
-                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
-                  <strong>Product Manager:</strong> Google Gemini 2.5 Flash (massive context window, ideal for cross-referencing research logs).
-                </p>
-                <p style="font-size: 0.85rem;">
-                  <strong>System Architect:</strong> NVIDIA NIM Nemotron 70B (high technical precision, perfect for generating databases and schemas).
-                </p>
-              </div>
-              <p>
-                This multi-provider routing represents a major optimization over single-model systems. The system avoids latency bottlenecks by using Groq for rapid-response nodes, while utilizing specialized engines where reasoning depth or context scale is mandatory.
-              </p>
-            </div>
+      <div class="qa-grid">
+        
+        <div class="qa-item" id="q1">
+          <div class="qa-trigger" onclick="toggleQa('q1')">
+            <span>Q: How do you handle LLM hallucinations in JSON structures?</span>
+            <i data-lucide="chevron-down"></i>
+          </div>
+          <div class="qa-body">
+            <p style="margin-bottom: 0.75rem;"><strong>A:</strong> We enforce structure at multiple layers:</p>
+            <ul style="margin-left: 1.5rem;">
+              <li>First, we configure Groq/API parameters with <code>response_format={"type": "json_object"}</code>.</li>
+              <li>Second, we pass the exact Pydantic schema in the system prompt instructions.</li>
+              <li>Third, the backend validates the raw string using <code>schema(**parsed)</code>. If keys are missing, Pydantic raises a <code>ValidationError</code>. We catch this in our <code>call_with_retry</code> loop, which automatically retries the LLM request up to 3 times with the validation error appended to the prompt history before failing the stage gracefully.</li>
+            </ul>
           </div>
         </div>
 
-        <!-- Tab 2: JSON -->
-        <div class="tab-content" id="json-tab">
-          <div class="grid-2">
-            <div>
-              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">JSON as the Architectural Glue</h3>
-              <p style="margin-bottom:1rem;">
-                In a complex pipeline involving three separate API providers (Groq, Google, NVIDIA) and multiple databases, standard raw string outputs create fragile boundaries. Blueprint resolves this by using structured JSON as the universal data contract.
-              </p>
-              <p style="margin-bottom:1.5rem;">
-                JSON plays a critical role in four distinct areas of the system:
-              </p>
-              <ul class="interactive-list">
-                <li class="interactive-list-item">
-                  <h4><i data-lucide="file-json"></i> LLM Output Validation</h4>
-                  <p>All LLM prompt calls enforce JSON schema formatting. Groq is queried with JSON mode enabled, and the resulting JSON string is parsed and validated against custom Pydantic schemas in models.py, ensuring no malformed outputs break the graph.</p>
-                </li>
-                <li class="interactive-list-item">
-                  <h4><i data-lucide="save"></i> Session Persistence</h4>
-                  <p>In db.py, when save_artifact is called, the state object is converted to JSON string and stored in the database. When a session is resumed or requested, these JSON columns are deserialized back into Pydantic models.</p>
-                </li>
-                <li class="interactive-list-item">
-                  <h4><i data-lucide="refresh-cw"></i> Client Communication</h4>
-                  <p>FastAPI routes serialize internal data structures into clean REST JSON responses. The Next.js frontend uses these models to display state, update loaders, and populate logs.</p>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">Pydantic State Model</h3>
-              <p style="font-size: 0.9rem; margin-bottom:1rem; color: var(--text-muted);">
-                Below is the core GraphState definition, showing how Pydantic annotations govern the state and merge properties across parallel node streams.
-              </p>
-              <pre class="schema-block" style="max-height: 380px;">
-<span class="keyword">class</span> <span class="type">GraphState</span>(BaseModel):
-    session_id: <span class="type">str</span>
-    startup_name: <span class="type">str</span>
-    idea: <span class="type">str</span>
-    github_repo: <span class="type">str</span>
-    status: <span class="type">str</span> = <span class="string">"running"</span>
-    
-    <span class="comment"># Reducers merge dictionaries and lists when parallel nodes complete</span>
-    stages: Annotated[Dict[<span class="type">str</span>, Any], reduce_dict] = Field(default_factory=dict)
-    failed_stages: Annotated[List[<span class="type">str</span>], reduce_list] = Field(default_factory=list)
-
-    <span class="comment"># Intermediate and final outputs</span>
-    startup_advisor: Optional[ValidationResult] = None
-    market_research: Optional[MarketResearchReport] = None
-    product_manager: Optional[PRD] = None
-    architect: Optional[ArchitectureSpec] = None
-    engineering_manager: Optional[IssuesAndSprintPlan] = None
-    marketing: Optional[MarketingAssets] = None
-
-    gate_decision: Optional[<span class="type">str</span>] = None
-    revised_idea: Optional[<span class="type">str</span>] = None
-    github_token: Optional[<span class="type">str</span>] = None</pre>
-            </div>
+        <div class="qa-item" id="q2">
+          <div class="qa-trigger" onclick="toggleQa('q2')">
+            <span>Q: Why didn't you use Server-Sent Events (SSE) for streaming instead of polling?</span>
+            <i data-lucide="chevron-down"></i>
+          </div>
+          <div class="qa-body">
+            <p><strong>A:</strong> Polling at 1.5-second intervals was a deliberate design choice. Server-Sent Events (SSE) require keeping open connections active on the server. On standard cloud serverless tiers, idle connections are aggressively terminated, leading to connection loss. Since our multi-agent pipeline completes in under 30 seconds, polling results in about 20 requests total. This puts minimal load on Supabase while significantly simplifying the backend state management.</p>
           </div>
         </div>
 
-        <!-- Tab 3: PDF Generation -->
-        <div class="tab-content" id="pdf-tab">
-          <div class="grid-2">
-            <div>
-              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">PDF Compiling via xhtml2pdf</h3>
-              <p style="margin-bottom:1rem;">
-                When the graph reaches completion, a final report is compiled. The system uses <code>xhtml2pdf</code> (also known as pisa) to convert HTML and CSS files directly to a printable PDF.
-              </p>
-              <p style="margin-bottom:1rem;">
-                Due to internal engine limitations in xhtml2pdf (which is built on top of ReportLab), standard modern CSS layouts will fail. The compiler enforces strict guidelines:
-              </p>
-              <div class="card" style="padding:1.5rem; margin-bottom: 1.5rem; border-left-color: var(--failed);">
-                <h4 style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--failed); margin-bottom: 0.5rem; text-transform: uppercase;"><i data-lucide="alert-triangle"></i> Engine Hard Limits</h4>
-                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
-                  <strong>No Flexbox / Grid:</strong> Flex and grid layouts are completely unsupported. All multi-column outputs (e.g. side-by-side callouts) must be written as legacy HTML <code>&lt;table&gt;</code> structures.
-                </p>
-                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
-                  <strong>No White-Space wrapping:</strong> CSS <code>white-space: pre-wrap</code> fails to wrap text. Code blocks and long comments must be pre-processed and force-wrapped via string utilities.
-                </p>
-                <p style="font-size: 0.85rem;">
-                  <strong>Page Margins & Breaks:</strong> Headers, footers, and page numbers must be defined using custom CSS page margins (<code>@page</code> declarations and counters).
-                </p>
-              </div>
-            </div>
-            <div>
-              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">HTML-to-PDF Pipeline</h3>
-              <p style="margin-bottom:1rem;">
-                The code inside <code>pdf_export.py</code> builds a single document:
-              </p>
-              <ul class="interactive-list">
-                <li class="interactive-list-item">
-                  <h4>1. Text Sanitisation</h4>
-                  <p>Special characters are HTML-escaped. Newline characters (<code>\n</code>) are replaced with <code>&lt;br/&gt;</code>, and long strings are divided by line wraps to avoid clipping at the page edge.</p>
-                </li>
-                <li class="interactive-list-item">
-                  <h4>2. Micro-component Tables</h4>
-                  <p>Badges (e.g. Must-Have, High Priority) are rendered using table cells with solid background colors and inline styles. Column splits are restricted to width tables (e.g., <code>width: 50%</code>).</p>
-                </li>
-                <li class="interactive-list-item">
-                  <h4>3. Pisa Rendering</h4>
-                  <p>The completed HTML string is loaded, and <code>pisa.CreatePDF()</code> writes the binary output. If any rendering error occurs, the partial file is safely deleted before throwing an exception.</p>
-                </li>
-              </ul>
-            </div>
+        <div class="qa-item" id="q3">
+          <div class="qa-trigger" onclick="toggleQa('q3')">
+            <span>Q: What happens if the backend server restarts in the middle of a pipeline run?</span>
+            <i data-lucide="chevron-down"></i>
+          </div>
+          <div class="qa-body">
+            <p><strong>A:</strong> Since LangGraph checkpointers are stored in a local SQLite file (<code>checkpoints.db</code>) on the server, a restart will terminate the active execution thread. However, any agent stages that completed before the restart are already permanently saved in Supabase. When the user refreshes, the frontend client queries the status. The backend detects that the LangGraph state is missing, queries Supabase to reconstruct the completed artifacts, and loads the session dashboard seamlessly.</p>
           </div>
         </div>
 
-        <!-- Tab 4: Integrations -->
-        <div class="tab-content" id="integrations-tab">
-          <div class="grid-2">
-            <div>
-              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">GitHub Issues Sync</h3>
-              <p style="margin-bottom:1rem;">
-                When a founder supplies a <code>github_repo</code> and a valid token, the Engineering Manager node triggers a background sync to create the project's task backlog automatically.
-              </p>
-              <p style="margin-bottom:1rem;">
-                To keep the pipeline fast and prevent timeouts, the issues are synchronized asynchronously:
-              </p>
-              <div class="card" style="padding:1.5rem; margin-bottom: 1.5rem; border-left-color: var(--complete);">
-                <h4 style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--complete); margin-bottom: 0.5rem; text-transform: uppercase;"><i data-lucide="check-circle2"></i> Non-blocking Background Tasks</h4>
-                <p style="font-size: 0.85rem; margin-bottom: 0.5rem;">
-                  Once the sprint plan is generated, the EM node spawns a background asyncio task (<code>create_github_issues_bulk</code>) to call the GitHub API.
-                </p>
-                <p style="font-size: 0.85rem;">
-                  This avoids blocking the FastAPI response thread. If the sync succeeds or fails, a log is written to the decision ledger, visible to the frontend in the logs drawer.
-                </p>
-              </div>
-            </div>
-            <div>
-              <h3 style="font-size: 1.25rem; font-weight:700; margin-bottom:1rem; text-transform:uppercase;">Notion Database Exporter</h3>
-              <p style="margin-bottom:1rem;">
-                The Notion integration allows founders to save their startup specs into a unified database. The process involves structural block translation:
-              </p>
-              <ul class="interactive-list">
-                <li class="interactive-list-item">
-                  <h4>1. Page Initialization</h4>
-                  <p>The system contacts <code>api.notion.com</code> using OAuth credentials to create a new page under the specified Notion database ID.</p>
-                </li>
-                <li class="interactive-list-item">
-                  <h4>2. Block Construction</h4>
-                  <p>In notion.py, state artifacts are translated into Notion block objects. Headers, lists, and quotes are converted. Large SQL DDL schema files are placed inside an interactive toggle block with code formatting.</p>
-                </li>
-                <li class="interactive-list-item">
-                  <h4>3. Chunks Appending</h4>
-                  <p>Notion limits page appends to 100 blocks per request. The system splits the assembled blocks into chunks of 80 and makes sequential PATCH requests to avoid hitting API rate limits.</p>
-                </li>
-              </ul>
-            </div>
+        <div class="qa-item" id="q4">
+          <div class="qa-trigger" onclick="toggleQa('q4')">
+            <span>Q: Why did you use SQLite for LangGraph checkpoints but Supabase for artifacts?</span>
+            <i data-lucide="chevron-down"></i>
+          </div>
+          <div class="qa-body">
+            <p><strong>A:</strong> LangGraph requires synchronous, low-latency checkpoint logging to save thread state at every single node transition. Saving checkpoints to a remote database like Supabase would add significant network latency to every step. By using local SQLite for the short-term checkpointer, the graph transitions instantly. Once the entire pipeline finishes, the final compiled artifacts are saved to Supabase to guarantee permanent storage.</p>
           </div>
         </div>
 
@@ -1313,29 +1793,23 @@
   <!-- Footer -->
   <footer>
     <div class="container">
-      <p>Blueprint Engine Technical Documentation. Built during edQuest by Team PARALLAX.</p>
+      <p>Blueprint Engine Technical Whitepaper & Simulator. Developed for technical validation.</p>
       <p style="margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-muted);">
-        Active Repository: <a href="https://github.com/varun2507027108-oss/AI-Orchestration-System" target="_blank">AI-Orchestration-System</a>
+        Github Repository: <a href="https://github.com/varun2507027108-oss/blueprint" target="_blank">blueprint</a>
       </p>
     </div>
   </footer>
 
-  <!-- State & Logic Script -->
+  <!-- Scripts -->
   <script>
-    // -------------------------------------------------------------
-    // Lucide Icons initialization
-    // -------------------------------------------------------------
+    // Initialize Lucide Icons
     lucide.createIcons();
 
-    // -------------------------------------------------------------
-    // Theme Toggle Logic
-    // -------------------------------------------------------------
+    // Theme Toggle
     const themeToggler = document.getElementById('themeToggler');
     const themeIcon = document.getElementById('themeIcon');
-    
-    // Default theme is dark
     let isLight = false;
-    
+
     themeToggler.addEventListener('click', () => {
       isLight = !isLight;
       if (isLight) {
@@ -1348,215 +1822,137 @@
       lucide.createIcons();
     });
 
-    // -------------------------------------------------------------
-    // Graph Visualizer Interactive Logic
-    // -------------------------------------------------------------
-    const nodes = {
-      'node-start': {
-        title: 'Start Node',
-        subtitle: 'Pipeline Entry Point',
-        role: 'Initiates graph execution. Receives startup details (name, idea, optional github repository details) and updates stage trackers to pending state.',
-        llm: null,
-        schema: null
-      },
-      'node-advisor': {
-        title: 'Startup Advisor',
-        subtitle: 'Groq · Llama 3.3 70B',
-        role: 'Acts as the VC gatekeeper. Evaluates the core idea for market timing, competition, founder fit, margin feasibility, and regulatory red flags. Returns a risk score between 0.0 and 1.0.',
-        llm: { provider: 'Groq', model: 'llama-3.3-70b-versatile', temp: '0.1' },
-        schemaName: 'ValidationResult',
-        schemaCode: 'class ValidationResult(BaseModel):\n    verdict: str  # "Approved" | "Needs Revision"\n    risk_score: float  # 0.0 to 1.0\n    reasoning: str  # Brutally honest thesis\n    red_flags: list[str]  # Critical blockers'
-      },
-      'node-gate': {
-        title: 'Risk Gate',
-        subtitle: 'Human-in-the-Loop Gate',
-        role: 'Triggers a workflow interrupt if risk_score >= 0.6 or red_flags are present. Pauses execution and checkpoints the thread state in SQLite. Resumes once the user submits a gate decision ("continue" or "revise").',
-        llm: null,
-        schemaName: 'GateDecision',
-        schemaCode: 'class GateDecisionRequest(BaseModel):\n    decision: str  # "continue" | "revise"\n    revised_idea: Optional[str] = None'
-      },
-      'node-researcher': {
-        title: 'Market Researcher',
-        subtitle: 'Groq · Llama 3.3 70B + Tavily API',
-        role: 'Performs live web searches using Tavily Search API. Collects real market competitor details, estimates TAM, outlines macro/micro trends, and provides verified source URLs.',
-        llm: { provider: 'Groq / Tavily', model: 'llama-3.3-70b-versatile', temp: '0.1' },
-        schemaName: 'MarketResearchReport',
-        schemaCode: 'class MarketResearchReport(BaseModel):\n    tam_estimate: str\n    competitors: list[Competitor]  # {name, desc, url}\n    trends: list[str]\n    sources: list[str]\n    swot: Optional[SWOTAnalysis] = None\n    gaps: list[str] = []'
-      },
-      'node-pm': {
-        title: 'Product Manager',
-        subtitle: 'Google Gemini · Gemini 2.5 Flash',
-        role: 'Synthesizes the initial concept and market research log. Generates a comprehensive Product Requirements Document (PRD) with product goals, success metrics, user stories, prioritized features, and roadmap phases.',
-        llm: { provider: 'Google Gemini', model: 'gemini-2.5-flash', temp: '0.2' },
-        schemaName: 'PRD',
-        schemaCode: 'class PRD(BaseModel):\n    goals: list[str] = []\n    success_metrics: list[str] = []\n    problem_statement: str\n    user_stories: list[str]  # "As a... I want..."\n    features: list[Feature]  # {name, desc, priority}\n    roadmap_phases: list[RoadmapPhase]'
-      },
-      'node-architect': {
-        title: 'System Architect',
-        subtitle: 'NVIDIA NIM · Llama 3.1 Nemotron 70B',
-        role: 'Designs the database and API contracts. Generates a fully valid SQL DDL script, a visual Mermaid ER diagram string, and an endpoint list describing HTTP method, path, description, and security attributes.',
-        llm: { provider: 'NVIDIA NIM', model: 'nvidia/llama-3.1-nemotron-70b-instruct', temp: '0.1' },
-        schemaName: 'ArchitectureSpec',
-        schemaCode: 'class ArchitectureSpec(BaseModel):\n    db_schema_sql: str  # PostgreSQL DDL script\n    db_schema_mermaid: str  # Mermaid ER code\n    api_endpoints: list[ApiEndpoint]  # {method, path, desc}\n    system_design_notes: Optional[str] = "N/A"'
-      },
-      'node-em': {
-        title: 'Engineering Manager',
-        subtitle: 'Groq · Llama 3.3 70B + GitHub API',
-        role: 'Converts architectural specifications into sprint backlogs. Lists detailed developer tasks with story points and labels. Launches background asyncio tasks to create issues in the user\'s GitHub repository.',
-        llm: { provider: 'Groq / GitHub API', model: 'llama-3.3-70b-versatile', temp: '0.1' },
-        schemaName: 'IssuesAndSprintPlan',
-        schemaCode: 'class IssuesAndSprintPlan(BaseModel):\n    issues: list[GitHubIssue]  # {title, body, labels, SP}\n    sprints: list[Sprint]  # {name, issue_titles}\n    definition_of_done: list[str]\n    tech_debt_risks: list[str]\n    team_size_recommended: Optional[Union[str, int]]'
-      },
-      'node-marketing': {
-        title: 'Marketing Specialist',
-        subtitle: 'Groq · Llama 3.3 70B',
-        role: 'Operates in parallel with the engineering stream. Drafts copy following the Problem-Agitate-Solve framework, outlines LinkedIn launch posts, writes drip campaigns, proposes pricing tiers, and compiles launch channels.',
-        llm: { provider: 'Groq', model: 'llama-3.3-70b-versatile', temp: '0.85' },
-        schemaName: 'MarketingAssets',
-        schemaCode: 'class MarketingAssets(BaseModel):\n    landing_copy: str  # PAS framework headline/body\n    linkedin_post: str\n    email_campaign: str  # Outreach campaign text\n    pricing_tiers: list[PricingTier]  # Basic / Pro tiers\n    email_sequence: list[EmailStep]  # 5-step drip campaign\n    ninety_day_plan: list[str]\n    launch_channels: list[dict]'
-      },
-      'node-join': {
-        title: 'Join Node',
-        subtitle: 'Pipeline Sync',
-        role: 'Coordinates synchronization. Evaluates parallel streams (Engineering & Marketing) and triggers exports (persists rows to Supabase, generates report PDF, and triggers Notion sync if connected).',
-        llm: null,
-        schema: null
+    // Q&A Accordion
+    function toggleQa(id) {
+      const el = document.getElementById(id);
+      const isExpanded = el.classList.contains('expanded');
+      
+      // Close others
+      document.querySelectorAll('.qa-item').forEach(item => {
+        item.classList.remove('expanded');
+      });
+
+      if (!isExpanded) {
+        el.classList.add('expanded');
       }
-    };
+    }
 
-    const graphNodeElements = document.querySelectorAll('.node');
-    const links = document.querySelectorAll('.link');
-    const paneTitle = document.getElementById('paneTitle');
-    const paneSubtitle = document.getElementById('paneSubtitle');
-    const paneRole = document.getElementById('paneRole');
-    const paneLlmSection = document.getElementById('paneLlmSection');
-    const paneLlmBadges = document.getElementById('paneLlmBadges');
-    const paneSchemaSection = document.getElementById('paneSchemaSection');
-    const paneSchemaName = document.getElementById('paneSchemaName');
-    const paneSchemaCode = document.getElementById('paneSchemaCode');
-
-    graphNodeElements.forEach(nodeEl => {
-      nodeEl.addEventListener('click', () => {
-        const id = nodeEl.id;
-        const data = nodes[id];
-        
-        if (!data) return;
-
-        // Reset active node classes
-        graphNodeElements.forEach(n => n.classList.remove('active'));
-        nodeEl.classList.add('active');
-
-        // Reset active links
-        links.forEach(l => l.classList.remove('active'));
-        
-        // Activate associated edges
-        if (id === 'node-start') {
-          document.getElementById('link-start-advisor').classList.add('active');
-        } else if (id === 'node-advisor') {
-          document.getElementById('link-advisor-gate').classList.add('active');
-        } else if (id === 'node-gate') {
-          document.getElementById('link-gate-researcher').classList.add('active');
-        } else if (id === 'node-researcher') {
-          document.getElementById('link-researcher-pm').classList.add('active');
-        } else if (id === 'node-pm') {
-          document.getElementById('link-pm-architect').classList.add('active');
-          document.getElementById('link-pm-marketing').classList.add('active');
-        } else if (id === 'node-architect') {
-          document.getElementById('link-architect-em').classList.add('active');
-        } else if (id === 'node-em') {
-          document.getElementById('link-em-join').classList.add('active');
-        } else if (id === 'node-marketing') {
-          document.getElementById('link-marketing-join').classList.add('active');
-        } else if (id === 'node-join') {
-          document.getElementById('link-join-end').classList.add('active');
-        }
-
-        // Update Details Panel
-        paneTitle.textContent = data.title;
-        paneSubtitle.textContent = data.subtitle;
-        paneRole.textContent = data.role;
-
-        // LLM Panel
-        if (data.llm) {
-          paneLlmSection.style.display = 'block';
-          paneLlmBadges.innerHTML = `
-            <span class="badge badge-accent">${data.llm.provider}</span>
-            <span class="badge">${data.llm.model}</span>
-            <span class="badge">Temp: ${data.llm.temp}</span>
-          `;
-        } else {
-          paneLlmSection.style.display = 'none';
-        }
-
-        // Schema Panel
-        if (data.schemaName) {
-          paneSchemaSection.style.display = 'block';
-          paneSchemaName.textContent = data.schemaName;
-          paneSchemaCode.textContent = data.schemaCode;
-        } else {
-          paneSchemaSection.style.display = 'none';
+    // Docs Sidebar Section Switcher
+    function activateSection(id) {
+      // Toggle side link
+      document.querySelectorAll('.sidebar-toc a').forEach(a => {
+        a.classList.remove('active');
+        if (a.getAttribute('href') === `#${id}`) {
+          a.classList.add('active');
         }
       });
-    });
+
+      // Toggle card visibility
+      const sections = ['sec-stack', 'sec-mechanics', 'sec-agents', 'sec-database', 'sec-oauth', 'sec-frontend', 'sec-pdf', 'sec-deploy'];
+      sections.forEach(s => {
+        const card = document.getElementById(s);
+        if (s === id) {
+          card.style.display = 'block';
+          card.style.animation = 'fadeIn 0.3s ease-out';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
 
     // -------------------------------------------------------------
-    // Directory Tree Logic
+    // Codebase Explorer Logic
     // -------------------------------------------------------------
     const files = {
-      'backend/main.py': {
-        desc: 'FastAPI web server exposing REST endpoints. Mounts static directory for compiled PDF downloads. Manages background async tasks for starting compiled graph thread executions, resuming interrupted gates, and triggering third-party integrations (GitHub/Notion) without blocking client-server response loops.',
-        exports: 'Endpoints: POST /sessions, GET /sessions/{id}, POST /sessions/{id}/gate-decision, POST /sessions/{id}/export, GET /sessions/{id}/decision-log, GET /auth/github, GET /auth/notion'
+      'b-main': {
+        name: 'main.py',
+        path: 'backend/main.py',
+        desc: 'FastAPI server implementing REST endpoints. Manages CORS, mounts static export downloads, and implements background async tasks using asyncio.create_task to run the LangGraph pipeline without blocking response loops. Implements OAuth exchanges for GitHub and Notion.',
+        connect: 'Acts as the entry point. Triggers graph.py, fetches results from db.py, and routes export requests to tools/pdf_export.py.',
+        exports: 'POST /sessions - Initiates thread\nGET /sessions/{id} - Fetches current state & artifacts\nPOST /sessions/{id}/gate-decision - Resumes from Risk Gate\nPOST /sessions/{id}/export - Triggers PDF/Notion compiling\nGET /auth/github & GET /auth/notion - Exchanges OAuth codes'
       },
-      'backend/graph.py': {
-        desc: 'Defines the LangGraph StateGraph, compiling the workflow nodes, edges, checkpointers, and routers. Implements individual nodes representing each of the 6 agents, calling appropriate LLM APIs, saving updates to GraphState, and appending decision notes to DB ledger tables.',
-        exports: 'Functions: create_graph(), init_saver(), query_groq(), startup_advisor_node(), product_manager_node(), architect_node(), Join_node()'
+      'b-graph': {
+        name: 'graph.py',
+        path: 'backend/graph.py',
+        desc: 'Constructs the LangGraph StateGraph. Defines the nodes representing the 6 agents, active edges, conditional routing (route_after_advisor), and SqliteSaver checkpointing. Implements Groq, Google, and NVIDIA API query wrappers.',
+        connect: 'Orchestrates the agent pipeline. Uses models.py for validation, db.py for checkpointing, and tools/tavily.py for web searches.',
+        exports: 'create_graph() -> CompiledGraph\ninit_saver() -> SqliteSaver checkpointer context\nquery_groq(prompt, schema) -> Validated Pydantic output\nstartup_advisor_node(state) -> Dict[str, Any]\nproduct_manager_node(state) -> Dict[str, Any]'
       },
-      'backend/models.py': {
-        desc: 'Holds data models representing state. Defines sub-models like Competitor, Feature, RoadmapPhase, and GitHubIssue. Enforces type verification for inputs and output schemas. Leverages LangGraph reducer functions to combine state properties concurrently.',
-        exports: 'Classes: GraphState, ValidationResult, MarketResearchReport, PRD, ArchitectureSpec, IssuesAndSprintPlan, MarketingAssets'
+      'b-models': {
+        name: 'models.py',
+        path: 'backend/models.py',
+        desc: 'Specifies data validation schemas. Declares Pydantic submodels (Competitor, Feature, RoadmapPhase, SWOTAnalysis, PricingTier, EmailStep) and the central GraphState schema containing parallel stage dictionaries governed by state merge reducers.',
+        connect: 'Imported by graph.py to validate agent LLM outputs, and by main.py for request/response serialization.',
+        exports: 'class GraphState(BaseModel) - Central state schema\nclass ValidationResult(BaseModel) - Advisor schema\nclass MarketResearchReport(BaseModel) - Researcher schema\nclass PRD(BaseModel) - Product Manager schema\nclass ArchitectureSpec(BaseModel) - Architect schema'
       },
-      'backend/db.py': {
-        desc: 'Coordinates state persistence. Inserts session parameters and updates status. Serializes Pydantic schemas into JSON strings for database insertion. Includes a local SQLite database file framework as a reliable fallback when Supabase connection parameters are missing or error out.',
-        exports: 'Functions: save_session(), update_session_status(), save_artifact(), get_latest_artifact(), add_decision_log(), get_decision_log()'
+      'b-db': {
+        name: 'db.py',
+        path: 'backend/db.py',
+        desc: 'Handles persistent database logging. Connects to Supabase to store sessions, versions of generated artifacts, and decision logs. Installs a local SQLite database (founder_os.db) as a robust automatic fallback when connection errors occur.',
+        connect: 'Called by main.py and graph.py nodes to log execution steps and save final compiled JSON files.',
+        exports: 'save_session(session_id, name, idea)\nupdate_session_status(session_id, status)\nsave_artifact(session_id, stage_name, payload) -> version\nget_latest_artifact(session_id, stage_name) -> payload dict\nSQLite Fallback Table Initialization'
       },
-      'backend/config.py': {
-        desc: 'Manages configuration and system keys. Uses pydantic-settings BaseSettings to parse environment variables from the .env file. Outlines defaults for model configurations and sets credentials fallback logic.',
-        exports: 'Variables: settings (pydantic BaseSettings instance)'
+      'b-config': {
+        name: 'config.py',
+        path: 'backend/config.py',
+        desc: 'Configuration parser. Uses pydantic-settings BaseSettings to load and validate environment keys (.env), establishing default models (llama-3.3-70b-versatile, gemini-2.5-flash) and origin URLs.',
+        connect: 'Used across all backend files to access validated environment variables.',
+        exports: 'class Settings(BaseSettings)\nsettings = Settings() - Exported settings instance'
       },
-      'backend/tools/tavily.py': {
-        desc: 'Wrapper for Tavily Search API. Formulates search queries on behalf of the Market Researcher agent, retrieves organic search results, filters URLs, and compiles descriptions for competitor analysis.',
-        exports: 'Functions: search_tavily(query: str) -> list'
+      't-tavily': {
+        name: 'tavily.py',
+        path: 'backend/tools/tavily.py',
+        desc: 'Integration helper for Tavily Search API. Assembles search parameters, calls the endpoint, extracts organic search result snippets, and returns details to the Market Researcher agent.',
+        connect: 'Called exclusively by the Market Researcher node in graph.py.',
+        exports: 'search_tavily(query: str, max_results: int) -> list[dict]'
       },
-      'backend/tools/github.py': {
-        desc: 'GitHub REST client. Takes issue logs generated by the Engineering Manager, structures issue bodies containing context descriptions and story points, and bulk creates issues on the founder\'s repository via OAuth tokens.',
-        exports: 'Functions: create_github_issue(), create_github_issues_bulk()'
+      't-github': {
+        name: 'github.py',
+        path: 'backend/tools/github.py',
+        desc: 'GitHub REST wrapper. Exchanges tokens, parses the EM sprint issues, and initiates background bulk POST calls to create issues with labels, story points, and task checklists on the user\'s repository.',
+        connect: 'Triggered by main.py during GitHub exports. Uses credentials retrieved via OAuth.',
+        exports: 'create_github_issue(repo, title, body, labels, token)\ncreate_github_issues_bulk(repo, issues_list, token)'
       },
-      'backend/tools/notion.py': {
-        desc: 'Notion database integration client. Maps state artifacts into distinct Notion blocks (headings, paragraphs, quotes, toggles). Creates database pages and pushes content logs in batches of 80 to circumvent Notion API limits.',
-        exports: 'Functions: create_notion_page(), append_notion_blocks(), translate_artifact_to_notion_blocks()'
+      't-notion': {
+        name: 'notion.py',
+        path: 'backend/tools/notion.py',
+        desc: 'Notion database compiler. Creates pages and translates JSON states into distinct Notion blocks (headings, callouts, lists). Includes automatic array chunking to bypass Notion\'s 100-block payload limit.',
+        connect: 'Triggered by main.py during Notion exports. Translates raw stage JSONs into Notion block lists.',
+        exports: 'create_notion_page(name, id, token, db_id) -> page_id\nappend_notion_blocks(page_id, blocks, token) -> success_bool\ntranslate_artifact_to_notion_blocks(stage, data) -> list[block_dict]'
       },
-      'backend/tools/pdf_export.py': {
-        desc: 'xhtml2pdf report compiler. Assembles a single HTML page containing the compiled session artifacts, styles layout components using strictly compliant CSS styling rules, and renders a PDF to the exports/ directory.',
-        exports: 'Functions: export_to_pdf(), generate_report_html(), clean(), clean_pre()'
+      't-pdf': {
+        name: 'pdf_export.py',
+        path: 'backend/tools/pdf_export.py',
+        desc: 'Assembles a monolithic HTML report with customized CSS styles, sanitizes text strings, and calls xhtml2pdf (pisa) to export reports to the exports/ directory.',
+        connect: 'Triggered by main.py during PDF export requests. Runs inside an async thread pool.',
+        exports: 'export_to_pdf(startup_name, session_id, artifacts_dict) -> file_path\ngenerate_report_html(startup_name, session_id, artifacts)\nclean(text) -> HTML-escaped & word-wrapped string'
       },
-      'frontend/globals.css': {
-        desc: 'Root CSS stylesheet loading Tailwind CSS v4. Outlines dark and light theme palette colors and view-transition settings.',
-        exports: 'Import directives: @import "tailwindcss"; @import "tw-animate-css";'
+      'f-css': {
+        name: 'globals.css',
+        path: 'frontend/globals.css',
+        desc: 'Root CSS stylesheet configuration. Imports Tailwind CSS v4 directives, sets up theme colors (cream base, charcoal panel, amber accent), and overrides default dark-theme variables.',
+        connect: 'Styles all pages and components in the Next.js frontend.',
+        exports: '@import "tailwindcss";\n@theme declarations'
       },
-      'frontend/app/layout.tsx': {
-        desc: 'Next.js root page layout wrapping application components in the JetBrains Mono font context and loading the ThemeProvider wrapper.',
-        exports: 'Component: RootLayout({ children })'
+      'f-layout': {
+        name: 'layout.tsx',
+        path: 'frontend/app/layout.tsx',
+        desc: 'Next.js App Router root layout. Loads the JetBrains Mono font, initializes theme headers, and mounts the ThemeProvider wrapper around child pages.',
+        connect: 'Acts as the wrapper template for all Next.js views.',
+        exports: 'export default function RootLayout({ children })'
       },
-      'frontend/app/page.tsx': {
-        desc: 'Main landing page for the Blueprint system. Introduces the multi-agent orchestration thesis, lists agent roles, and directs the user to launch a pipeline session.',
-        exports: 'Component: LandingPage()'
+      'f-page': {
+        name: 'page.tsx',
+        path: 'frontend/app/page.tsx',
+        desc: 'Next.js home page introducing the Blueprint system, mapping out agent roles, and routing users to the intake form.',
+        connect: 'Main landing view that users land on.',
+        exports: 'export default function LandingPage()'
       }
     };
 
     function toggleTreeNode(element) {
       const parent = element.parentElement;
       parent.classList.toggle('expanded');
-      
       const icon = element.querySelector('i');
       if (parent.classList.contains('expanded')) {
         icon.setAttribute('data-lucide', 'folder-open');
@@ -1566,56 +1962,709 @@
       lucide.createIcons();
     }
 
-    const treeFileElements = document.querySelectorAll('[data-file]');
-    const fileDetailPrompt = document.getElementById('fileDetailPrompt');
-    const fileDetailContent = document.getElementById('fileDetailContent');
-    const fileNameEl = document.getElementById('fileName');
-    const filePathEl = document.getElementById('filePath');
-    const fileDescEl = document.getElementById('fileDesc');
-    const fileExportsEl = document.getElementById('fileExports');
-
-    treeFileElements.forEach(fileEl => {
+    document.querySelectorAll('[data-file]').forEach(fileEl => {
       fileEl.addEventListener('click', (e) => {
         e.stopPropagation();
-        
-        const path = fileEl.getAttribute('data-file');
-        const data = files[path];
-        
+        const key = fileEl.getAttribute('data-file');
+        const data = files[key];
         if (!data) return;
 
-        // Reset active files
-        treeFileElements.forEach(f => f.classList.remove('active'));
+        document.querySelectorAll('[data-file]').forEach(f => f.classList.remove('active'));
         fileEl.classList.add('active');
 
-        // Show details
-        fileDetailPrompt.style.display = 'none';
-        fileDetailContent.style.display = 'block';
+        document.getElementById('filePrompt').style.display = 'none';
+        document.getElementById('fileDetail').style.display = 'block';
 
-        fileNameEl.textContent = path.split('/').pop();
-        filePathEl.textContent = path;
-        fileDescEl.textContent = data.desc;
-        fileExportsEl.innerHTML = `<code class="schema-block" style="background:#0b0f14; padding:0.75rem; border-radius:4px; max-height:none; font-size:0.7rem; color:#E2E8F0;">${data.exports}</code>`;
+        document.getElementById('fName').textContent = data.name;
+        document.getElementById('fPath').textContent = data.path;
+        document.getElementById('fDesc').textContent = data.desc;
+        document.getElementById('fExports').textContent = data.exports;
+        
+        if (data.connect) {
+          document.getElementById('fConnectSection').style.display = 'block';
+          document.getElementById('fConnect').textContent = data.connect;
+        } else {
+          document.getElementById('fConnectSection').style.display = 'none';
+        }
       });
     });
 
     // -------------------------------------------------------------
-    // Tab Controller Logic
+    // Live Simulator Logic
     // -------------------------------------------------------------
-    function switchTab(tabId) {
-      // Deactivate all tab headers and contents
-      const tabBtns = document.querySelectorAll('.tab-btn');
-      const tabContents = document.querySelectorAll('.tab-content');
+    const presets = {
+      logiflow: {
+        idea: "AI-Powered Micro-Logistics Optimizer for last-mile delivery drivers.",
+        risk: 0.35,
+        advisor: {
+          verdict: "Approved",
+          risk_score: 0.35,
+          reasoning: "Excellent market timing. Aggressively growing e-commerce sectors require rapid last-mile adjustments. Margin feasibility is high due to routing API cost structures.",
+          red_flags: []
+        },
+        researcher: {
+          tam: "$12.4 Billion",
+          competitors: [
+            { name: "Route4Me", weakness: "Lacks real-time traffic machine learning models." },
+            { name: "OptimoRoute", weakness: "Expensive pricing tiers for independent drivers." }
+          ]
+        },
+        pm: {
+          problem: "Last-mile delivery drivers lose 20% of their earnings to fuel inefficiency and poor route scheduling.",
+          goals: ["Reduce routing times by 18%", "Increase driver daily deliveries by 2"],
+          features: [
+            { name: "Dynamic Route Optimizer", priority: "Must-Have" },
+            { name: "Real-time Traffic Rerouting", priority: "Should-Have" }
+          ]
+        },
+        architect: {
+          mermaid: "classDiagram\n  class Driver {\n    id UUID PK\n    name VARCHAR\n  }\n  class Route {\n    id UUID PK\n    driver_id UUID FK\n    optimized_path JSON\n  }",
+          endpoints: [
+            { method: "POST", path: "/routes/optimize", desc: "Generates optimal path coordinate lists" }
+          ]
+        },
+        em: {
+          sprints: [
+            { name: "Sprint 1: Core Database & Auth", issues: ["DB Schema Setup (3 SP)", "Driver API integration (5 SP)"] }
+          ]
+        },
+        marketing: {
+          copy: "PROBLEM: Stop losing fuel money. AGITATE: Traffic jams eat your margins. SOLVE: LogiFlow optimizes your routing path in real-time."
+        }
+      },
+      solargrid: {
+        idea: "Decentralized energy trading network using local smart grids.",
+        risk: 0.58,
+        advisor: {
+          verdict: "Approved with Cautions",
+          risk_score: 0.58,
+          reasoning: "Strong thesis, but heavily dependent on municipal grids and regulatory compliance. High capital expenses are expected.",
+          red_flags: ["Regulatory grid access limitations", "High initial hardware sensor costs"]
+        },
+        researcher: {
+          tam: "$8.2 Billion",
+          competitors: [
+            { name: "PowerLedger", weakness: "Enterprise-heavy, ignores domestic micro-grids." }
+          ]
+        },
+        pm: {
+          problem: "Local residential solar setups waste 35% of excess generated energy due to lacking peer-to-peer sales channels.",
+          goals: ["Deploy domestic smart grid nodes", "Enable P2P trading transactions"],
+          features: [
+            { name: "Local Energy Marketplace", priority: "Must-Have" }
+          ]
+        },
+        architect: {
+          mermaid: "classDiagram\n  class Household {\n    id UUID PK\n    generation_rate FLOAT\n  }\n  class Transaction {\n    id UUID PK\n    seller_id UUID FK\n    kwh_amount FLOAT\n  }",
+          endpoints: [
+            { method: "POST", path: "/trade/execute", desc: "Executes P2P energy ledger sales" }
+          ]
+        },
+        em: {
+          sprints: [
+            { name: "Sprint 1: Smart Grid Ledger Setup", issues: ["Blockchain Node connection (8 SP)"] }
+          ]
+        },
+        marketing: {
+          copy: "PROBLEM: Solar energy goes waste. AGITATE: Utility companies buy your power for pennies. SOLVE: Trade energy directly with neighbors."
+        }
+      },
+      dropshipper: {
+        idea: "Generic drop-shipping store with zero marketing budget.",
+        risk: 0.88,
+        advisor: {
+          verdict: "Needs Revision",
+          risk_score: 0.88,
+          reasoning: "Extremely low moat. Generic drop-shipping has near-zero margins. Highly vulnerable to single points of death (advertising platform shutdowns).",
+          red_flags: ["Zero competitive moat", "Negative unit economics under ad bidding wars", "No organic marketing strategy"]
+        },
+        researcher: {
+          tam: "$1.5 Billion",
+          competitors: [
+            { name: "AliExpress", weakness: "Dominates on price, rendering new entrants unviable." }
+          ]
+        },
+        pm: {
+          problem: "Over-saturation of generic products leads to skyrocketing customer acquisition costs.",
+          goals: ["Establish organic traffic channels", "Create unique product branding"],
+          features: [
+            { name: "Automated Ad Planner", priority: "Should-Have" }
+          ]
+        },
+        architect: {
+          mermaid: "classDiagram\n  class Store {\n    id UUID PK\n    url VARCHAR\n  }",
+          endpoints: [
+            { method: "POST", path: "/orders", desc: "Sync orders to suppliers" }
+          ]
+        },
+        em: {
+          sprints: [
+            { name: "Sprint 1: Landing Page", issues: ["Static HTML setup (1 SP)"] }
+          ]
+        },
+        marketing: {
+          copy: "PROBLEM: Hard to sell online. AGITATE: Ad costs eat all profits. SOLVE: Instantly spin up low-margin generic dropship stores."
+        }
+      }
+    };
 
-      tabBtns.forEach(btn => btn.classList.remove('active'));
-      tabContents.forEach(content => content.classList.remove('active'));
+    const nodeMetadata = {
+      start: {
+        name: "Start Node",
+        role: "The entry point of the LangGraph StateGraph. Receives the raw startup idea and initializes the GraphState schema.",
+        prompt: "N/A - Direct Initialization Node.",
+        schema: "class GraphState(BaseModel):\n    session_id: str\n    idea: str\n    risk_score: float = 0.0\n    stages: Dict[str, Any] = {}"
+      },
+      advisor: {
+        name: "Startup Advisor (Llama 3.3 70B)",
+        role: "Performs the VC viability analysis. Evaluates market entry risks, unit economics, and triggers the interrupt gate if the risk exceeds 0.85.",
+        prompt: "You are a General Partner at a Sequoia/a16z-caliber VC firm. Deliver a BRUTAL, HONEST evaluation. Apply 5 lenses: Founder-Market Fit, Market Timing, Unit Economics, Competitive Moat, Single Point of Death.",
+        schema: "class ValidationResult(BaseModel):\n    verdict: str\n    risk_score: float\n    reasoning: str\n    red_flags: list[str]"
+      },
+      gate: {
+        name: "Human-in-the-Loop Risk Gate",
+        role: "A state machine conditional node. If risk_score > 0.85, raises a GraphInterrupt and pauses thread execution. Saves local variables to checkpoints.db.",
+        prompt: "N/A - Conditional Python logical check:\nif state.risk_score > 0.85:\n    interrupt()",
+        schema: "Command(resume={\"decision\": \"continue\" | \"revise\"})"
+      },
+      researcher: {
+        name: "Market Researcher (Llama 3.3 70B + Tavily)",
+        role: "Scrapes search engines using Tavily to identify top competitors, assess industry trends, and estimate TAM/SAM/SOM.",
+        prompt: "You are a Senior Research Analyst from McKinsey. Provide exact TAM/SAM/SOM figures. For competitors, identify their SINGLE most exploitable weakness in one sentence.",
+        schema: "class MarketResearchReport(BaseModel):\n    tam_estimate: str\n    competitors: list[Competitor]\n    trends: list[str]\n    swot_analysis: SWOTAnalysis"
+      },
+      pm: {
+        name: "Product Manager (Gemini 2.5 Flash)",
+        role: "Drafts the Product Requirements Document (PRD) using MoSCoW feature prioritization and JTBD user stories.",
+        prompt: "You are a Principal PM. Use the MoSCoW prioritization method for features. Write user stories in Jobs-to-be-Done (JTBD) format. Define exactly 3 goals and 3 measurable success metrics.",
+        schema: "class PRD(BaseModel):\n    problem_statement: str\n    goals: list[str]\n    features: list[Feature]\n    user_stories: list[str]"
+      },
+      architect: {
+        name: "System Architect (Llama 3.1 Nemotron 70B)",
+        role: "Generates the database schema SQL and compile-ready Mermaid.js ERD syntax.",
+        prompt: "You are a Staff Architect. Design the LEANEST MVP system. Provide PostgreSQL DDL syntax and valid Mermaid.js ER diagram syntax. Include a scale ceiling declaration.",
+        schema: "class ArchitectureSpec(BaseModel):\n    db_schema_sql: str\n    db_schema_mermaid: str\n    api_endpoints: list[APIEndpoint]\n    design_notes: str"
+      },
+      em: {
+        name: "Engineering Manager (Llama 3.3 70B + GitHub)",
+        role: "Breaks the architecture down into 4 sprints with Fibonacci story points. Creates tickets on GitHub in the background.",
+        prompt: "You are a Director of Engineering. Create exactly 4 dependency-ordered sprints. Each issue must have Context, Acceptance Criteria, and Fibonacci story points (1, 2, 3, 5, 8).",
+        schema: "class IssuesAndSprintPlan(BaseModel):\n    issues: list[GitHubIssue]\n    sprints: list[Sprint]\n    definition_of_done: list[str]"
+      },
+      marketing: {
+        name: "Marketing Specialist (Llama 3.3 70B)",
+        role: "Writes high-conversion landing page copy using the PAS (Problem-Agitate-Solve) framework and a 5-step email sequence.",
+        prompt: "You are a world-class CMO. Use the PAS (Problem-Agitate-Solve) framework for landing copy. Write a 5-step email drip campaign (Day 0, 3, 7, 14, 30). Define a Good/Better/Best pricing model.",
+        schema: "class MarketingAssets(BaseModel):\n    landing_copy: str\n    linkedin_post: str\n    pricing_tiers: list[PricingTier]\n    email_sequence: list[EmailStep]"
+      },
+      join: {
+        name: "State Join Node",
+        role: "Synchronizes the parallel branches (Engineering and Marketing). Uses the GraphState dictionary reducer to merge states without race conditions.",
+        prompt: "N/A - LangGraph fan-in synchronization point.",
+        schema: "class GraphState(BaseModel)"
+      },
+      end: {
+        name: "End Node",
+        role: "Finalizes execution. Saves the final consolidated state to Supabase, generates the PDF memo, and marks the session complete.",
+        prompt: "N/A - Terminal state.",
+        schema: "None"
+      }
+    };
 
-      // Find trigger button and activate it
-      const targetBtn = Array.from(tabBtns).find(btn => btn.getAttribute('onclick').includes(tabId));
-      if (targetBtn) targetBtn.classList.add('active');
+    let activePreset = 'logiflow';
+    let simTimeout = null;
+    let simStepIndex = 0;
+    let isManualStep = false;
+    let currentSessionState = {
+      session_id: "idle",
+      idea: "",
+      risk_score: 0.0,
+      stages: {}
+    };
 
-      // Activate content
-      const targetContent = document.getElementById(tabId);
-      if (targetContent) targetContent.classList.add('active');
+    function updateCustomIdea() {
+      const val = document.getElementById('thesisInput').value;
+      currentSessionState.idea = val;
+      updateStateInspector();
+    }
+
+    function updateRiskSlider(val) {
+      const floatVal = (val / 100).toFixed(2);
+      document.getElementById('riskValue').textContent = floatVal;
+      currentSessionState.risk_score = parseFloat(floatVal);
+      updateStateInspector();
+    }
+
+    function updateStateInspector() {
+      document.getElementById('stateJson').textContent = JSON.stringify(currentSessionState, null, 2);
+    }
+
+    function switchConsoleTab(tab) {
+      document.querySelectorAll('.console-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('stateInspector').style.display = 'none';
+      document.getElementById('simLogs').style.display = 'none';
+      document.getElementById('nodeDetails').style.display = 'none';
+
+      if (tab === 'logs') {
+        document.getElementById('tabLogs').classList.add('active');
+        document.getElementById('simLogs').style.display = 'flex';
+      } else if (tab === 'state') {
+        document.getElementById('tabState').classList.add('active');
+        document.getElementById('stateInspector').style.display = 'block';
+      } else if (tab === 'details') {
+        document.getElementById('tabDetails').classList.add('active');
+        document.getElementById('nodeDetails').style.display = 'flex';
+      }
+    }
+
+    function selectSimNode(nodeKey) {
+      const meta = nodeMetadata[nodeKey];
+      if (!meta) return;
+
+      switchConsoleTab('details');
+      document.getElementById('nodeDetailName').textContent = meta.name;
+      document.getElementById('nodeDetailRole').textContent = meta.role;
+      document.getElementById('nodeDetailPrompt').textContent = meta.prompt;
+      document.getElementById('nodeDetailSchema').textContent = meta.schema;
+    }
+
+    function loadPreset() {
+      activePreset = document.getElementById('presetSelect').value;
+      const preset = presets[activePreset];
+      
+      document.getElementById('thesisInput').value = preset.idea;
+      document.getElementById('riskSlider').value = preset.risk * 100;
+      document.getElementById('riskValue').textContent = preset.risk.toFixed(2);
+      
+      resetSimUi();
+    }
+
+    function resetSimUi() {
+      clearTimeout(simTimeout);
+      simStepIndex = 0;
+      isManualStep = false;
+      
+      document.getElementById('simStatus').textContent = "Status: Idle";
+      document.getElementById('simStatus').className = "console-indicator";
+      document.getElementById('activeNodeText').textContent = "Status: Idle";
+      
+      // Reset Nodes styling
+      document.querySelectorAll('#simSvg .node').forEach(n => {
+        n.classList.remove('active', 'complete', 'failed');
+      });
+      document.querySelectorAll('#simSvg .link').forEach(l => {
+        l.classList.remove('active', 'complete');
+      });
+
+      currentSessionState = {
+        session_id: "session_" + Math.random().toString(36).substr(2, 9),
+        idea: document.getElementById('thesisInput').value,
+        risk_score: parseFloat(document.getElementById('riskValue').textContent),
+        stages: {}
+      };
+
+      updateStateInspector();
+
+      document.getElementById('simLogs').innerHTML = `<div class="log-entry">[SYSTEM] Environment reset. Preset "${activePreset.toUpperCase()}" loaded.</div>`;
+      document.getElementById('renderOutputContent').textContent = "No active node outputs. Run the simulation to see structured JSON validation.";
+      document.getElementById('outputBoxTitle').textContent = "OUTPUT ARTIFACT";
+      document.getElementById('outputBoxSchema').textContent = "None";
+      document.getElementById('interruptOverlay').style.display = 'none';
+      
+      document.getElementById('btnRunSim').disabled = false;
+      document.getElementById('btnStepSim').disabled = false;
+    }
+
+    function logToSimConsole(text, type='default') {
+      const logs = document.getElementById('simLogs');
+      const time = new Date().toLocaleTimeString().split(' ')[0];
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `<span style="color:#64748B;">[${time}]</span> ${text}`;
+      logs.appendChild(entry);
+      logs.scrollTop = logs.scrollHeight;
+    }
+
+    function updateOutput(title, schema, content) {
+      document.getElementById('outputBoxTitle').textContent = title;
+      document.getElementById('outputBoxSchema').textContent = schema;
+      document.getElementById('renderOutputContent').innerHTML = typeof content === 'object' 
+        ? `<pre style="font-size:0.75rem; color:#10b981; margin:0; padding:0; background:transparent; border:none; overflow:visible;">${JSON.stringify(content, null, 2)}</pre>`
+        : content;
+    }
+
+    // Main controller for simulation
+    function startSimulation() {
+      resetSimUi();
+      isManualStep = false;
+      document.getElementById('btnRunSim').disabled = true;
+      document.getElementById('btnStepSim').disabled = true;
+      document.getElementById('simStatus').textContent = "Status: Running";
+      document.getElementById('simStatus').className = "console-indicator running";
+      
+      logToSimConsole("Initializing LangGraph StateGraph thread session...", "info");
+      executeStep();
+    }
+
+    function stepSimulation() {
+      if (simStepIndex === 0 && !isManualStep) {
+        resetSimUi();
+        isManualStep = true;
+        document.getElementById('btnRunSim').disabled = true;
+        document.getElementById('simStatus').textContent = "Status: Running";
+        document.getElementById('simStatus').className = "console-indicator running";
+        logToSimConsole("Initializing LangGraph StateGraph in STEP-BY-STEP mode...", "info");
+      }
+      executeStep();
+    }
+
+    function executeStep() {
+      switch(simStepIndex) {
+        case 0:
+          const startNode = document.getElementById('s-node-start');
+          startNode.classList.add('active');
+          selectSimNode('start');
+          logToSimConsole("GraphState initialized with thesis idea.", "success");
+          
+          simStepIndex = 1;
+          if (isManualStep) {
+            startNode.classList.remove('active');
+            startNode.classList.add('complete');
+            document.getElementById('s-link-start-advisor').classList.add('complete');
+          } else {
+            simTimeout = setTimeout(() => {
+              startNode.classList.remove('active');
+              startNode.classList.add('complete');
+              document.getElementById('s-link-start-advisor').classList.add('complete');
+              executeStep();
+            }, 1000);
+          }
+          break;
+          
+        case 1:
+          logToSimConsole("Entering node 'startup_advisor'...", "info");
+          logToSimConsole("Querying Groq (model: llama-3.3-70b-versatile, temp: 0.1)...");
+          const advNode = document.getElementById('s-node-advisor');
+          advNode.classList.add('active');
+          document.getElementById('s-link-start-advisor').classList.add('active');
+          selectSimNode('advisor');
+          
+          simStepIndex = 2;
+          
+          const advTask = () => {
+            advNode.classList.remove('active');
+            let score = currentSessionState.risk_score;
+            let verdict = score > 0.85 ? "Needs Revision" : (score > 0.5 ? "Approved with Cautions" : "Approved");
+            
+            let data = {
+              verdict: verdict,
+              risk_score: score,
+              reasoning: score > 0.85 ? "Extremely low moat. Highly vulnerable to single points of death." : "Viable thesis. Standard market risks apply.",
+              red_flags: score > 0.85 ? ["Zero competitive moat", "Negative unit economics"] : []
+            };
+            
+            currentSessionState.stages.advisor = data;
+            updateStateInspector();
+            
+            logToSimConsole(`Advisor finished. Verdict: ${data.verdict} | Risk: ${data.risk_score}`, data.risk_score > 0.85 ? "warn" : "success");
+            updateOutput("Advisor output: ValidationResult", "class ValidationResult(BaseModel)", data);
+            
+            if (score > 0.85) {
+              advNode.classList.add('failed');
+              triggerGateInterrupt();
+            } else {
+              advNode.classList.add('complete');
+              document.getElementById('s-link-advisor-gate').classList.add('complete');
+              if (!isManualStep) executeStep();
+            }
+          };
+
+          if (isManualStep) {
+            advTask();
+          } else {
+            simTimeout = setTimeout(advTask, 1800);
+          }
+          break;
+          
+        case 2:
+          logToSimConsole("Entering node 'risk_gate'...", "info");
+          const gateNode = document.getElementById('s-node-gate');
+          gateNode.classList.add('active');
+          selectSimNode('gate');
+          
+          simStepIndex = 3;
+          const gateTask = () => {
+            gateNode.classList.remove('active');
+            gateNode.classList.add('complete');
+            document.getElementById('s-link-gate-researcher').classList.add('complete');
+            logToSimConsole("Risk Gate passed. Proceeding to market research.", "success");
+            if (!isManualStep) executeStep();
+          };
+
+          if (isManualStep) {
+            gateTask();
+          } else {
+            simTimeout = setTimeout(gateTask, 1000);
+          }
+          break;
+          
+        case 3:
+          logToSimConsole("Entering node 'market_researcher'...", "info");
+          logToSimConsole("Querying Tavily search endpoints for competitive intelligence...");
+          const resNode = document.getElementById('s-node-researcher');
+          resNode.classList.add('active');
+          document.getElementById('s-link-gate-researcher').classList.add('active');
+          selectSimNode('researcher');
+          
+          simStepIndex = 4;
+          const resTask = () => {
+            resNode.classList.remove('active');
+            resNode.classList.add('complete');
+            document.getElementById('s-link-gate-researcher').classList.remove('active');
+            document.getElementById('s-link-gate-researcher').classList.add('complete');
+            document.getElementById('s-link-researcher-pm').classList.add('complete');
+
+            const data = presets[activePreset].researcher || {
+              tam: "$10 Billion",
+              competitors: [{ name: "Generic Corp", weakness: "Slow execution." }]
+            };
+            
+            currentSessionState.stages.researcher = data;
+            updateStateInspector();
+            
+            logToSimConsole("Research analyst reports successfully compiled.", "success");
+            updateOutput("Researcher output: MarketResearchReport", "class MarketResearchReport(BaseModel)", data);
+
+            if (!isManualStep) executeStep();
+          };
+
+          if (isManualStep) {
+            resTask();
+          } else {
+            simTimeout = setTimeout(resTask, 1800);
+          }
+          break;
+          
+        case 4:
+          logToSimConsole("Entering node 'product_manager'...", "info");
+          logToSimConsole("Querying Google Gemini (model: gemini-2.5-flash, temp: 0.2)...");
+          const pmNode = document.getElementById('s-node-pm');
+          pmNode.classList.add('active');
+          document.getElementById('s-link-researcher-pm').classList.add('active');
+          selectSimNode('pm');
+          
+          simStepIndex = 5;
+          const pmTask = () => {
+            pmNode.classList.remove('active');
+            pmNode.classList.add('complete');
+            document.getElementById('s-link-researcher-pm').classList.remove('active');
+            document.getElementById('s-link-researcher-pm').classList.add('complete');
+            
+            const data = presets[activePreset].pm || {
+              problem: "Lacking custom AI orchestration workflows.",
+              goals: ["Automate pipeline mapping"],
+              features: [{ name: "Workflow Designer", priority: "Must-Have" }]
+            };
+            
+            currentSessionState.stages.pm = data;
+            updateStateInspector();
+            
+            logToSimConsole("Product Requirements Document (PRD) generated.", "success");
+            updateOutput("PM output: PRD", "class PRD(BaseModel)", data);
+
+            if (!isManualStep) executeStep();
+          };
+
+          if (isManualStep) {
+            pmTask();
+          } else {
+            simTimeout = setTimeout(pmTask, 1800);
+          }
+          break;
+          
+        case 5:
+          logToSimConsole("Splitting thread into parallel execution streams: Engineering vs Growth...", "info");
+          const archNode = document.getElementById('s-node-architect');
+          const mktNode = document.getElementById('s-node-marketing');
+          
+          archNode.classList.add('active');
+          mktNode.classList.add('active');
+          
+          document.getElementById('s-link-pm-architect').classList.add('active');
+          document.getElementById('s-link-pm-marketing').classList.add('active');
+          selectSimNode('architect');
+          
+          simStepIndex = 6;
+          const parallelTask = () => {
+            archNode.classList.remove('active');
+            archNode.classList.add('complete');
+            document.getElementById('s-link-pm-architect').classList.remove('active');
+            document.getElementById('s-link-pm-architect').classList.add('complete');
+            document.getElementById('s-link-architect-em').classList.add('complete');
+            
+            const dataArch = presets[activePreset].architect || {
+              mermaid: "classDiagram\n  class Node {\n    id UUID\n  }",
+              endpoints: [{ method: "GET", path: "/nodes", desc: "List nodes" }]
+            };
+            
+            currentSessionState.stages.architect = dataArch;
+            updateStateInspector();
+            
+            logToSimConsole("System Architect completed database ERD designs.", "success");
+            updateOutput("Architect output: ArchitectureSpec", "class ArchitectureSpec(BaseModel)", dataArch);
+
+            if (!isManualStep) executeStep();
+          };
+
+          if (isManualStep) {
+            parallelTask();
+          } else {
+            simTimeout = setTimeout(parallelTask, 1500);
+          }
+          break;
+          
+        case 6:
+          logToSimConsole("Entering node 'engineering_manager'...", "info");
+          const emNode = document.getElementById('s-node-em');
+          const marketingNode = document.getElementById('s-node-marketing');
+          emNode.classList.add('active');
+          document.getElementById('s-link-architect-em').classList.add('active');
+          selectSimNode('em');
+          
+          simStepIndex = 7;
+          const emTask = () => {
+            emNode.classList.remove('active');
+            emNode.classList.add('complete');
+            document.getElementById('s-link-architect-em').classList.remove('active');
+            document.getElementById('s-link-architect-em').classList.add('complete');
+            document.getElementById('s-link-em-join').classList.add('complete');
+            
+            const dataEm = presets[activePreset].em || {
+              sprints: [{ name: "Sprint 1", issues: ["Initial setup"] }]
+            };
+            
+            currentSessionState.stages.em = dataEm;
+            updateStateInspector();
+            
+            logToSimConsole("EM compiled sprint backlog tasks. Initiating background issue creator sync...", "success");
+            updateOutput("EM output: IssuesAndSprintPlan", "class IssuesAndSprintPlan(BaseModel)", dataEm);
+
+            // Complete marketing too
+            marketingNode.classList.remove('active');
+            marketingNode.classList.add('complete');
+            document.getElementById('s-link-pm-marketing').classList.remove('active');
+            document.getElementById('s-link-pm-marketing').classList.add('complete');
+            document.getElementById('s-link-marketing-join').classList.add('complete');
+            
+            const dataMkt = presets[activePreset].marketing || {
+              copy: "PAS landing copy text."
+            };
+            currentSessionState.stages.marketing = dataMkt;
+            updateStateInspector();
+            logToSimConsole("CMO growth materials compiled successfully.", "success");
+
+            if (!isManualStep) executeStep();
+          };
+
+          if (isManualStep) {
+            emTask();
+          } else {
+            simTimeout = setTimeout(emTask, 1500);
+          }
+          break;
+          
+        case 7:
+          logToSimConsole("Synchronizing parallel streams at node 'join'...", "info");
+          const joinNode = document.getElementById('s-node-join');
+          joinNode.classList.add('active');
+          
+          document.getElementById('s-link-em-join').classList.add('active');
+          document.getElementById('s-link-marketing-join').classList.add('active');
+          selectSimNode('join');
+          
+          simStepIndex = 8;
+          const joinTask = () => {
+            joinNode.classList.remove('active');
+            joinNode.classList.add('complete');
+            
+            document.getElementById('s-link-em-join').classList.remove('active');
+            document.getElementById('s-link-em-join').classList.add('complete');
+            document.getElementById('s-link-marketing-join').classList.remove('active');
+            document.getElementById('s-link-marketing-join').classList.add('complete');
+            
+            document.getElementById('s-link-join-end').classList.add('complete');
+            logToSimConsole("Fan-in synchronization complete. Merging GraphState dictionaries.", "success");
+            if (!isManualStep) executeStep();
+          };
+
+          if (isManualStep) {
+            joinTask();
+          } else {
+            simTimeout = setTimeout(joinTask, 1200);
+          }
+          break;
+          
+        case 8:
+          const endNode = document.getElementById('s-node-end');
+          endNode.classList.add('complete');
+          selectSimNode('end');
+          
+          logToSimConsole("Fan-in synchronization complete. Writing data states to Supabase...", "success");
+          logToSimConsole("Compiling PDF exports. Process complete!", "success");
+          
+          document.getElementById('simStatus').textContent = "Status: Complete";
+          document.getElementById('simStatus').className = "console-indicator";
+          document.getElementById('activeNodeText').textContent = "Status: Finished";
+          
+          updateOutput("Full Project compiled", "All Stages Completed", "The pipeline run has successfully ended. Checkpoints are archived, artifacts are persistent in Supabase. You can download the VC report PDF or view the Notion Workspace board.");
+          
+          document.getElementById('btnRunSim').disabled = false;
+          document.getElementById('btnStepSim').disabled = false;
+          simStepIndex = 0;
+          isManualStep = false;
+          break;
+      }
+    }
+
+    function triggerGateInterrupt() {
+      document.getElementById('simStatus').textContent = "Status: Interrupt";
+      document.getElementById('simStatus').className = "console-indicator paused";
+      document.getElementById('activeNodeText').textContent = "Status: Paused at Gate";
+      logToSimConsole("RISK GATE EXCEEDED: Interrupting execution thread. Awaiting gate decision...", "warn");
+      
+      const gateNode = document.getElementById('s-node-gate');
+      gateNode.classList.add('active');
+      document.getElementById('s-link-advisor-gate').classList.add('active');
+
+      document.getElementById('interruptOverlay').style.display = 'block';
+    }
+
+    function resumeSimulation(decision) {
+      document.getElementById('interruptOverlay').style.display = 'none';
+      const gateNode = document.getElementById('s-node-gate');
+      gateNode.classList.remove('active');
+
+      if (decision === 'continue') {
+        logToSimConsole("User command received: 'continue'. Resuming thread checkpoint...", "info");
+        gateNode.classList.add('complete');
+        document.getElementById('s-link-advisor-gate').classList.remove('active');
+        document.getElementById('s-link-advisor-gate').classList.add('complete');
+        document.getElementById('s-link-gate-researcher').classList.add('complete');
+        
+        document.getElementById('simStatus').textContent = "Status: Running";
+        document.getElementById('simStatus').className = "console-indicator running";
+        
+        simStepIndex = 3;
+        if (isManualStep) {
+          logToSimConsole("Ready for next step. Click 'Step' to continue.", "info");
+        } else {
+          executeStep();
+        }
+      } else {
+        logToSimConsole("User command received: 'revise'. Resetting state to advisor entry point...", "warn");
+        document.getElementById('presetSelect').value = 'solargrid';
+        loadPreset();
+      }
     }
   </script>
 </body>
