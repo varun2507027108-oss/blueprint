@@ -202,10 +202,24 @@
       z-index: 1;
     }
 
-    .hero-content {
+    .hero-container-grid {
       position: relative;
       z-index: 2;
-      max-width: 900px;
+      width: 100%;
+      display: grid;
+      grid-template-cols: 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    @media (min-width: 992px) {
+      .hero-container-grid {
+        grid-template-cols: 1.2fr 0.8fr;
+      }
+    }
+
+    .hero-left {
+      max-width: 750px;
     }
 
     .hero-tag {
@@ -225,7 +239,7 @@
     }
 
     .hero h1 {
-      font-size: 3.8rem;
+      font-size: 3.2rem;
       font-weight: 800;
       line-height: 1.1;
       text-transform: uppercase;
@@ -241,10 +255,10 @@
     }
 
     .hero p {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       color: var(--text-muted);
       margin-bottom: 2.5rem;
-      max-width: 750px;
+      max-width: 650px;
       line-height: 1.7;
     }
 
@@ -289,6 +303,104 @@
     .btn-secondary:hover {
       background: var(--panel-light);
       border-color: var(--text-muted);
+    }
+
+    .nav-start-btn {
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .nav-start-btn:hover {
+      background: var(--accent-muted);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* Specs Card on Hero Right */
+    .hero-specs-card {
+      background: rgba(14, 19, 36, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .light-theme .hero-specs-card {
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .specs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+
+    .specs-title {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+    }
+
+    .specs-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--complete);
+      position: relative;
+    }
+
+    .specs-status-dot::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: var(--complete);
+      animation: specs-ping 1.5s infinite ease-in-out;
+    }
+
+    @keyframes specs-ping {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      100% {
+        transform: scale(2.5);
+        opacity: 0;
+      }
+    }
+
+    .specs-body {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .specs-item {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .specs-item strong {
+      color: var(--text);
+      display: block;
+      margin-bottom: 0.15rem;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
     }
 
     /* Interactive Live Simulator Section */
@@ -605,6 +717,33 @@
     .log-entry.warn {
       color: var(--failed);
       font-weight: 700;
+    }
+
+    .console-indicator {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    .console-indicator.running {
+      color: var(--accent);
+      border-color: rgba(245, 158, 11, 0.3);
+      background: var(--accent-muted);
+    }
+    .console-indicator.complete {
+      color: var(--complete);
+      border-color: var(--complete-muted);
+      background: var(--complete-muted);
+    }
+    .console-indicator.paused {
+      color: var(--blue);
+      border-color: rgba(59, 130, 246, 0.3);
+      background: var(--blue-muted);
     }
 
     .state-inspector-pane {
@@ -1117,11 +1256,11 @@
         BLUEPRINT <span>ENGINE</span>
       </a>
       <nav>
-        <a href="#hero" class="active">Overview</a>
         <a href="#simulator">Simulator</a>
-        <a href="#langgraph">Architecture</a>
+        <a href="#langgraph">Whitepaper</a>
         <a href="#structure">Codebase</a>
-        <a href="#qa">Q&A Checklist</a>
+        <a href="#qa">Q&A</a>
+        <a href="#simulator" class="nav-start-btn">START PIPELINE</a>
         <button class="theme-toggle" id="themeToggler" aria-label="Toggle Theme">
           <i data-lucide="sun" id="themeIcon"></i>
         </button>
@@ -1132,21 +1271,45 @@
   <!-- Hero Section -->
   <section class="hero" id="hero">
     <div class="hero-glow"></div>
-    <div class="container hero-content">
-      <div class="hero-tag">
-        <i data-lucide="cpu"></i> State-of-the-Art Multi-Agent Orchestrator
+    <div class="container hero-container-grid">
+      <div class="hero-left">
+        <div class="hero-tag">
+          <i data-lucide="cpu"></i> State-of-the-Art Multi-Agent Orchestrator
+        </div>
+        <h1>🧬 BLUEPRINT.AI<br><span>WHITEPAPER & SIM</span></h1>
+        <p>
+          An enterprise-grade, stateful multi-agent system built on Next.js 15, FastAPI, and LangGraph. Submit a startup thesis and coordinate six specialized AI agents to generate structured PRDs, database schemas, sprint backlogs, and landing copy in under 30 seconds.
+        </p>
+        <div class="btn-group">
+          <a href="#simulator" class="btn btn-primary">
+            Launch Live Simulator <i data-lucide="play"></i>
+          </a>
+          <a href="#langgraph" class="btn btn-secondary">
+            Read Whitepaper
+          </a>
+        </div>
       </div>
-      <h1>🧬 Blueprint.ai <span>Whitepaper</span></h1>
-      <p>
-        An enterprise-grade, stateful multi-agent system built on Next.js 15, FastAPI, and LangGraph. Submit a startup thesis and coordinate six specialized AI agents to generate structured PRDs, database schemas, sprint backlogs, and landing copy in under 30 seconds.
-      </p>
-      <div class="btn-group">
-        <a href="#simulator" class="btn btn-primary">
-          Launch Live Simulator <i data-lucide="play"></i>
-        </a>
-        <a href="#langgraph" class="btn btn-secondary">
-          Explore Technical Specs
-        </a>
+      <div class="hero-right">
+        <div class="hero-specs-card">
+          <div class="specs-header">
+            <span class="specs-title">Pipeline Specs</span>
+            <span class="specs-status-dot"></span>
+          </div>
+          <div class="specs-body">
+            <div class="specs-item">
+              <strong>LANGGRAPH THREADS:</strong> Managed state machines with SqliteSaver checkpoints supporting HITL pauses.
+            </div>
+            <div class="specs-item">
+              <strong>PULL MECHANICS:</strong> Client-side dynamic state polling optimized at 1.5s intervals.
+            </div>
+            <div class="specs-item">
+              <strong>SPLIT DATABASES:</strong> Local SQLite checkpointer for execution speeds + Supabase PG for persistent archives.
+            </div>
+            <div class="specs-item">
+              <strong>OAUTH EXCHANGE:</strong> Secure client-side tokens avoiding plaintext server storage.
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -1177,6 +1340,7 @@
               <select class="select-preset" id="presetSelect" onchange="loadPreset()">
                 <option value="logiflow">LogiFlow (Micro-Logistics) - Safe Path</option>
                 <option value="solargrid">SolarGrid (Decentralized Energy) - Medium Risk</option>
+                <option value="medisync">MediSync (Clinical Chart Synthesizer) - Low Risk / Approved</option>
                 <option value="dropshipper">DropShipper (Low-Moat e-Commerce) - High Risk / Interrupted</option>
               </select>
             </div>
@@ -1210,7 +1374,10 @@
           <div class="graph-panel">
             <div class="graph-stage-header">
               <span>LANGGRAPH WORKFLOW DIAGRAM (Click nodes to inspect details)</span>
-              <span id="activeNodeText">Status: Idle</span>
+              <div style="display: flex; gap: 0.75rem; align-items: center;">
+                <span class="console-indicator" id="simStatus">Status: Idle</span>
+                <span id="activeNodeText">Status: Idle</span>
+              </div>
             </div>
             
             <svg class="graph-svg" id="simSvg" viewBox="0 0 600 450">
@@ -2069,6 +2236,45 @@
           copy: "PROBLEM: Solar energy goes waste. AGITATE: Utility companies buy your power for pennies. SOLVE: Trade energy directly with neighbors."
         }
       },
+      medisync: {
+        idea: "Clinical chart synthesizer for automated patient intake and summaries.",
+        risk: 0.25,
+        advisor: {
+          verdict: "Approved",
+          risk_score: 0.25,
+          reasoning: "Strong clinical utility. Automating patient summaries saves hours for medical staff. Highly secure HIPAA-compliant architecture is required, but market demand is extremely high.",
+          red_flags: []
+        },
+        researcher: {
+          tam: "$15.8 Billion",
+          competitors: [
+            { name: "Epic Systems", weakness: "Legacy system with slow API integration cycles." },
+            { name: "Carbon Health", weakness: "Focused on proprietary clinics, lacks interoperability." }
+          ]
+        },
+        pm: {
+          problem: "Clinicians spend up to 3 hours daily on manual documentation and patient chart synthesis.",
+          goals: ["Reduce charting time by 45%", "Achieve 99.8% extraction accuracy on medical codes"],
+          features: [
+            { name: "HL7/FHIR Data Ingestion", priority: "Must-Have" },
+            { name: "AI Summary Generator", priority: "Must-Have" }
+          ]
+        },
+        architect: {
+          mermaid: "classDiagram\n  class Patient {\n    id UUID PK\n    first_name VARCHAR\n  }\n  class Chart {\n    id UUID PK\n    patient_id UUID FK\n    summary_text TEXT\n  }",
+          endpoints: [
+            { method: "POST", path: "/charts/synthesize", desc: "Synthesizes clinical chart text into structured JSON" }
+          ]
+        },
+        em: {
+          sprints: [
+            { name: "Sprint 1: HIPAA & FHIR Integration", issues: ["FHIR Client Setup (5 SP)", "Audit Logging Framework (3 SP)"] }
+          ]
+        },
+        marketing: {
+          copy: "PROBLEM: Medical charting takes hours. AGITATE: Doctors suffer from burnout. SOLVE: MediSync synthesizes patient charts in seconds, securely."
+        }
+      },
       dropshipper: {
         idea: "Generic drop-shipping store with zero marketing budget.",
         risk: 0.88,
@@ -2666,6 +2872,9 @@
         loadPreset();
       }
     }
+
+    // Initialize preset on page load
+    loadPreset();
   </script>
 </body>
 </html>
